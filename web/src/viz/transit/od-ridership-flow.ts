@@ -8,6 +8,7 @@ export interface OdRidershipFlowOptions {
   chartTitle?: string;
   chartSubtitle?: string;
   sourceNote?: string;
+  containerWidth?: number;
 }
 
 const MTA_TRUNK_PALETTE = [
@@ -45,6 +46,10 @@ export function buildOdRidershipFlowOption(
   rows: readonly Record<string, unknown>[],
   options: OdRidershipFlowOptions = {}
 ): EChartsOption {
+  const isCompact = options.containerWidth !== undefined && options.containerWidth < 520;
+  const sankeySideMargin = isCompact
+    ? Math.max(76, Math.min(110, Math.floor((options.containerWidth ?? 360) * 0.26)))
+    : 150;
   if (!rows || rows.length === 0) {
     return {
       title: {
@@ -338,10 +343,10 @@ export function buildOdRidershipFlowOption(
         {
           type: 'sankey',
           layoutIterations: 32,
-          nodeWidth: 16,
-          nodeGap: 14,
-          left: 150,
-          right: 150,
+          nodeWidth: isCompact ? 12 : 16,
+          nodeGap: isCompact ? 10 : 14,
+          left: sankeySideMargin,
+          right: sankeySideMargin,
           top: options.chartTitle ? 60 : 25,
           bottom: options.sourceNote ? 40 : 25,
           draggable: false,
@@ -360,11 +365,11 @@ export function buildOdRidershipFlowOption(
           },
           label: {
             fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontSize: 11,
+            fontSize: isCompact ? 10 : 11,
             fontWeight: 500,
             color: '#1E293B',
             overflow: 'truncate',
-            width: 130,
+            width: isCompact ? sankeySideMargin - 12 : 130,
             formatter: (params: unknown) => {
               const item = params as { name: string };
               return item.name.replace(/\s*\((?:Origin|Dest)\)$/, '');

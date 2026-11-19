@@ -59,16 +59,40 @@ async function bootstrap(): Promise<void> {
     bodyContainer.innerHTML = '';
 
     if (store.notebook.activeView === 'studio') {
+      const sidebarBackdrop = document.createElement('div');
+      sidebarBackdrop.className = 'mobile-sidebar-backdrop';
+      bodyContainer.appendChild(sidebarBackdrop);
+
       const sidebarMount = document.createElement('div');
       sidebarMount.id = 'sidebar-mount';
       bodyContainer.appendChild(sidebarMount);
       const cleanupSidebar = renderSidebarDrawer(sidebarMount);
+
+      const setMobileSidebarOpen = (open: boolean) => {
+        sidebarMount.classList.toggle('mobile-sidebar-open', open);
+        sidebarBackdrop.classList.toggle('open', open);
+      };
+      const onToggleSidebar = () => {
+        setMobileSidebarOpen(!sidebarMount.classList.contains('mobile-sidebar-open'));
+      };
+      const onCloseSidebar = () => {
+        setMobileSidebarOpen(false);
+      };
+      sidebarBackdrop.addEventListener('click', onCloseSidebar);
+      if (typeof window !== 'undefined') {
+        window.addEventListener('dbtc:toggle-mobile-sidebar', onToggleSidebar);
+        window.addEventListener('dbtc:close-mobile-sidebar', onCloseSidebar);
+      }
 
       const notebookMount = document.createElement('div');
       notebookMount.id = 'notebook-mount';
       bodyContainer.appendChild(notebookMount);
       const cleanupNb = renderNotebookView(notebookMount);
       cleanupCurrentView = () => {
+        if (typeof window !== 'undefined') {
+          window.removeEventListener('dbtc:toggle-mobile-sidebar', onToggleSidebar);
+          window.removeEventListener('dbtc:close-mobile-sidebar', onCloseSidebar);
+        }
         cleanupSidebar();
         cleanupNb();
       };

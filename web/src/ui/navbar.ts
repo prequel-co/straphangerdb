@@ -22,6 +22,7 @@ export function renderNavbar(container: HTMLElement): void {
         <a href="https://dbtc.prequel.nyc" target="_blank" rel="noopener noreferrer" class="navbar-brand-link" title="Data Based Train Control (dbtc.prequel.nyc)">
           ${getTransitEmblemSvg(28)}
           <span class="navbar-brand">DATA BASED TRAIN CONTROL</span>
+          <span class="navbar-brand-short">DBTC</span>
         </a>
         <a href="https://github.com/prequel-co/straphangerdb" target="_blank" rel="noopener noreferrer" class="navbar-subbrand navbar-subbrand-link" title="StraphangerDB GitHub Repository">StraphangerDB</a>
 
@@ -33,8 +34,24 @@ export function renderNavbar(container: HTMLElement): void {
             Data &amp; Uploads
           </button>
         </div>
+
+        <button
+          type="button"
+          id="mobile-nav-menu-btn"
+          class="mobile-nav-menu-btn ${store.notebook.mode === 'live' ? 'is-live' : ''}"
+          aria-expanded="false"
+          aria-controls="navbar-collapsible"
+          aria-label="Workspace menu"
+          title="Mode, Story, Save, Open &amp; Reset"
+        >
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+            <path d="M3 5h14M3 10h14M3 15h14"/>
+          </svg>
+          ${store.notebook.mode === 'live' ? '<span class="mobile-nav-live-dot" aria-hidden="true"></span>' : ''}
+        </button>
       </div>
 
+      <div class="navbar-collapsible" id="navbar-collapsible">
       <div class="navbar-center">
         <div class="mode-select-container">
           <label class="mode-select-label" for="mode-select">Mode:</label>
@@ -108,6 +125,7 @@ export function renderNavbar(container: HTMLElement): void {
           Reset
         </button>
       </div>
+      </div>
     </header>
   `;
 
@@ -176,6 +194,20 @@ export function renderNavbar(container: HTMLElement): void {
 
   const modeInfoBtn = container.querySelector('#mode-info-btn') as HTMLButtonElement | null;
   const modeTooltipWrapper = container.querySelector('#mode-tooltip-wrapper') as HTMLElement | null;
+  const mobileMenuBtn = container.querySelector('#mobile-nav-menu-btn') as HTMLButtonElement | null;
+  const navbarCollapsible = container.querySelector('#navbar-collapsible') as HTMLElement | null;
+
+  const setMobileMenuOpen = (open: boolean) => {
+    if (!navbarCollapsible || !mobileMenuBtn) return;
+    navbarCollapsible.classList.toggle('open', open);
+    mobileMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+
+  mobileMenuBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = navbarCollapsible?.classList.contains('open') ?? false;
+    setMobileMenuOpen(!isOpen);
+  });
 
   modeInfoBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -183,12 +215,27 @@ export function renderNavbar(container: HTMLElement): void {
   });
 
   const closeModeTooltip = (e: MouseEvent) => {
-    if (modeTooltipWrapper && !modeTooltipWrapper.contains(e.target as Node)) {
+    const target = e.target as Node;
+    if (modeTooltipWrapper && !modeTooltipWrapper.contains(target)) {
       modeTooltipWrapper.classList.remove('open');
+    }
+    if (
+      navbarCollapsible?.classList.contains('open') &&
+      !navbarCollapsible.contains(target) &&
+      !mobileMenuBtn?.contains(target)
+    ) {
+      setMobileMenuOpen(false);
+    }
+  };
+  const closeOnEscape = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      modeTooltipWrapper?.classList.remove('open');
+      setMobileMenuOpen(false);
     }
   };
   if (typeof document !== 'undefined') {
     document.addEventListener('click', closeModeTooltip);
+    document.addEventListener('keydown', closeOnEscape);
   }
 
   const countdownTextEl = container.querySelector('#live-countdown-text') as HTMLElement | null;
@@ -233,6 +280,7 @@ export function renderNavbar(container: HTMLElement): void {
     }
     if (typeof document !== 'undefined') {
       document.removeEventListener('click', closeModeTooltip);
+      document.removeEventListener('keydown', closeOnEscape);
     }
     if (typeof window !== 'undefined') {
       window.removeEventListener('dbtc:notebook-updated', onNotebookUpdated);

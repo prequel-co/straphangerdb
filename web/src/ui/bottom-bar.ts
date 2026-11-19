@@ -101,9 +101,26 @@ export function renderBottomBar(container: HTMLElement): () => void {
           }
         </div>
 
+        ${
+          isEngineBooting || isRunning
+            ? `
+          <div class="mobile-status-strip" role="status" aria-live="polite">
+            <span class="status-indicator-dot ${isEngineBooting ? 'dot-booting' : 'dot-running'}"></span>
+            <span class="mobile-status-text">${isEngineBooting ? 'Booting DuckDB...' : `Running #${activeCell?.ordinal ?? ''}...`}</span>
+            ${
+              isRunning
+                ? `<button id="mobile-cancel-query-btn" type="button" class="dbtc-btn btn-xs btn-danger">Cancel</button>`
+                : ''
+            }
+          </div>
+        `
+            : ''
+        }
+
         <div class="status-right mobile-mode-switcher">
           <button class="dbtc-btn btn-xs btn-ghost mobile-tab-btn ${!isStory && activeCell && !activeCell.showSqlEditor && !activeCell.showOssiePillBar ? 'active' : ''}" data-mobile-tab="chart">Chart</button>
-          <button class="dbtc-btn btn-xs btn-ghost mobile-tab-btn ${!isStory && activeCell && (activeCell.showSqlEditor || activeCell.showOssiePillBar) ? 'active' : ''}" data-mobile-tab="pills-sql">Metrics &amp; SQL</button>
+          <button class="dbtc-btn btn-xs btn-ghost mobile-tab-btn mobile-only-tab" data-mobile-tab="visuals">Visuals</button>
+          <button class="dbtc-btn btn-xs btn-ghost mobile-tab-btn ${!isStory && activeCell && (activeCell.showSqlEditor || activeCell.showOssiePillBar) ? 'active' : ''}" data-mobile-tab="pills-sql"><span class="tab-label-desktop">Metrics &amp; SQL</span><span class="tab-label-mobile">SQL</span></button>
           <button class="dbtc-btn btn-xs btn-ghost mobile-tab-btn ${!isStory && activeCell?.chartType === 'table' ? 'active' : ''}" data-mobile-tab="table">Table</button>
           <button class="dbtc-btn btn-xs btn-ghost mobile-tab-btn ${isStory ? 'active' : ''}" data-mobile-tab="story">Story</button>
         </div>
@@ -115,6 +132,16 @@ export function renderBottomBar(container: HTMLElement): () => void {
       btn.addEventListener('click', async () => {
         const tab = btn.getAttribute('data-mobile-tab');
         const conn = getDuckDbConnection();
+
+        if (tab === 'visuals') {
+          if (store.notebook.activeView !== 'studio') {
+            store.notebook.activeView = 'studio';
+          }
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('dbtc:toggle-mobile-sidebar'));
+          }
+          return;
+        }
 
         if (tab === 'story') {
           store.notebook.readOnlyStoryMode = !store.notebook.readOnlyStoryMode;
@@ -195,15 +222,18 @@ export function renderBottomBar(container: HTMLElement): () => void {
       });
     });
 
-    // Cancel query handler
+    // Cancel query handler (desktop & mobile)
     const cancelBtn = container.querySelector('#cancel-query-btn') as HTMLButtonElement | null;
-    cancelBtn?.addEventListener('click', () => {
+    const mobileCancelBtn = container.querySelector('#mobile-cancel-query-btn') as HTMLButtonElement | null;
+    const handleCancel = () => {
       if (activeCell && activeCell.executionState.status === 'running') {
         cancelCellQuery(getDuckDbConnection(), activeCell.cellId);
         showToast(`Cancelled query for #${activeCell.ordinal}.`, 'warning');
         draw();
       }
-    });
+    };
+    cancelBtn?.addEventListener('click', handleCancel);
+    mobileCancelBtn?.addEventListener('click', handleCancel);
 
     // Quick export handlers
     const quickCsvBtn = container.querySelector('#quick-csv-btn') as HTMLButtonElement | null;

@@ -10,6 +10,7 @@ export interface StationProgressionOptions {
   alignmentMode?: 'corridor' | 'normalized';
   showBoroughBands?: boolean;
   showStationLabels?: boolean;
+  containerWidth?: number;
 }
 
 // Canonical NYC Subway GTFS station ID to human-readable name and borough mapping
@@ -838,6 +839,7 @@ export function buildStationProgressionOption(
   rows: readonly Record<string, unknown>[],
   options: StationProgressionOptions = {}
 ): EChartsOption {
+  const isCompact = options.containerWidth !== undefined && options.containerWidth < 520;
   const metricCol = detectMeasureColumn(rows, options.metricColumn);
   const alignment = options.alignmentMode || 'corridor';
   const showStationLabels = options.showStationLabels ?? false;
@@ -1339,23 +1341,24 @@ export function buildStationProgressionOption(
     },
     legend: {
       top: 2,
-      right: 16,
+      right: isCompact ? 4 : 16,
+      type: isCompact ? 'scroll' : 'plain',
       data: legendData as any,
-      itemWidth: 20,
-      itemHeight: 20,
-      itemGap: 16,
+      itemWidth: isCompact ? 16 : 20,
+      itemHeight: isCompact ? 16 : 20,
+      itemGap: isCompact ? 10 : 16,
       textStyle: {
         color: '#1E293B',
-        fontSize: 12,
+        fontSize: isCompact ? 11 : 12,
         fontWeight: 700,
         fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
       },
       formatter: (name: string) => routeMetaMap.get(name)?.routeLabel ?? `Line ${name}`,
     },
     grid: {
-      left: 52,
-      right: 24,
-      top: 38,
+      left: isCompact ? 34 : 52,
+      right: isCompact ? 12 : 24,
+      top: isCompact ? 44 : 38,
       bottom: showStationLabels ? (allStations.length > 8 ? 65 : 40) : 22,
       containLabel: true,
     },
@@ -1363,7 +1366,7 @@ export function buildStationProgressionOption(
     yAxis: {
       type: 'value',
       name: metricLabel,
-      nameTextStyle: { color: '#475569', fontSize: 11, fontWeight: 600, align: 'right', padding: [0, 8, 0, 0] },
+      nameTextStyle: { color: '#475569', fontSize: 11, fontWeight: 600, align: 'left', padding: [0, 0, 4, 0] },
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: {

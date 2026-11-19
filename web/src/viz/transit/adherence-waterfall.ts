@@ -3,12 +3,14 @@ import type { EChartsOption } from 'echarts';
 export interface AdherenceWaterfallOptions {
   routeFilter?: string;
   splitGhostTrips?: boolean;
+  containerWidth?: number;
 }
 
 export function buildAdherenceWaterfallOption(
   rows: readonly Record<string, unknown>[],
   options: AdherenceWaterfallOptions = {}
 ): EChartsOption {
+  const isCompact = options.containerWidth !== undefined && options.containerWidth < 520;
   // Aggregate across rows (or filtered route)
   let scheduled = 0;
   let observed = 0;
@@ -211,10 +213,10 @@ export function buildAdherenceWaterfallOption(
       },
     },
     grid: {
-      left: 70,
-      right: 40,
+      left: isCompact ? 10 : 70,
+      right: isCompact ? 10 : 40,
       top: 68,
-      bottom: 40,
+      bottom: isCompact ? 32 : 40,
       containLabel: true,
     },
     xAxis: {
@@ -225,9 +227,10 @@ export function buildAdherenceWaterfallOption(
       axisLabel: {
         fontFamily: "'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif",
         fontWeight: 600,
-        fontSize: 12,
+        fontSize: isCompact ? 10 : 12,
         color: '#1E293B',
-        margin: 12,
+        margin: isCompact ? 8 : 12,
+        ...(isCompact ? { interval: 0, rotate: 18 } : {}),
       },
       splitLine: { show: false },
     },

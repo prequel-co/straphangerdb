@@ -974,11 +974,35 @@ export function renderCellVisual(
   }
 
   // Handle ECharts Visualizations
+  const SCROLL_MIN_WIDTH_BY_CHART: Partial<Record<ChartType, number>> = {
+    'marey-chart': 720,
+    'station-progression': 680,
+    'headway-horizon': 640,
+    'multimodal-pulse': 620,
+    'od-ridership-flow': 600,
+    'adherence-waterfall': 540,
+    bar: 540,
+    'stacked-bar': 540,
+    line: 540,
+    area: 540,
+    'stacked-area': 540,
+    scatter: 540,
+    heatmap: 540,
+  };
+
+  const getOuterWidth = (): number =>
+    container.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  const targetScrollWidth = SCROLL_MIN_WIDTH_BY_CHART[chartType];
+  const initialOuterWidth = getOuterWidth();
+  const useHorizontalScroll = Boolean(targetScrollWidth && initialOuterWidth < 520);
+
   const chartDiv = document.createElement('div');
   chartDiv.className = 'dbtc-chart-container';
-  chartDiv.style.width = '100%';
+  chartDiv.style.width = useHorizontalScroll && targetScrollWidth ? `${targetScrollWidth}px` : '100%';
   chartDiv.style.height = '100%';
   chartDiv.style.minHeight = '320px';
+  container.classList.toggle('dbtc-chart-scrollable', useHorizontalScroll);
   container.appendChild(chartDiv);
 
   const chart = echarts.init(chartDiv, 'mta-modern');
@@ -991,39 +1015,82 @@ export function renderCellVisual(
     });
   }
 
-  let option: echarts.EChartsOption;
+  const buildOptionForWidth = (outerWidth: number): echarts.EChartsOption => {
+    const isNarrow = outerWidth < 520;
+    const isScrollable = Boolean(targetScrollWidth && isNarrow);
+    const effectiveWidth = isScrollable && targetScrollWidth ? targetScrollWidth : outerWidth;
+    const isCompact = effectiveWidth < 520;
+    const widthConfig = { ...config, containerWidth: effectiveWidth };
+    let opt: echarts.EChartsOption;
 
-  switch (chartType) {
-    case 'marey-chart':
-      option = buildMareyChartOption(rows, config as any);
-      break;
-    case 'station-progression':
-      option = buildStationProgressionOption(rows, config as any);
-      break;
-    case 'headway-horizon':
-      option = buildHeadwayHorizonOption(rows, config as any);
-      break;
-    case 'adherence-waterfall':
-      option = buildAdherenceWaterfallOption(rows, config as any);
-      break;
-    case 'multimodal-pulse':
-      option = buildMultimodalPulseOption(rows, config as any);
-      break;
-    case 'od-ridership-flow':
-      option = buildOdRidershipFlowOption(rows, config as any);
-      break;
-    default:
-      option = buildStandardBiOption(chartType, rows, config);
-      break;
-  }
+    switch (chartType) {
+      case 'marey-chart':
+        opt = buildMareyChartOption(rows, widthConfig as any);
+        break;
+      case 'station-progression':
+        opt = buildStationProgressionOption(rows, widthConfig as any);
+        break;
+      case 'headway-horizon':
+        opt = buildHeadwayHorizonOption(rows, widthConfig as any);
+        break;
+      case 'adherence-waterfall':
+        opt = buildAdherenceWaterfallOption(rows, widthConfig as any);
+        break;
+      case 'multimodal-pulse':
+        opt = buildMultimodalPulseOption(rows, widthConfig as any);
+        break;
+      case 'od-ridership-flow':
+        opt = buildOdRidershipFlowOption(rows, widthConfig as any);
+        break;
+      default:
+        opt = buildStandardBiOption(chartType, rows, config);
+        if (isCompact && opt.grid && !Array.isArray(opt.grid)) {
+          opt.grid = { ...opt.grid, left: 36, right: 12 };
+        }
+        break;
+    }
 
-  option = applyChartColorOverrides(option, config);
-  chart.setOption(option, true);
+    if (isScrollable) {
+      // Let native horizontal touch scrolling pan the wide chart smoothly instead of ECharts inside dataZoom
+      opt = { ...opt, dataZoom: [] };
+    }
+
+    if (isNarrow) {
+      if (opt.tooltip && !Array.isArray(opt.tooltip)) {
+        opt.tooltip = { ...opt.tooltip, confine: true };
+      }
+      if (opt.legend && !Array.isArray(opt.legend) && !opt.legend.type) {
+        opt.legend = { ...opt.legend, type: 'scroll' };
+      }
+    }
+
+    return applyChartColorOverrides(opt, config);
+  };
+
+  let lastScrollable = useHorizontalScroll;
+  let lastCompact = (useHorizontalScroll && targetScrollWidth ? targetScrollWidth : initialOuterWidth) < 520;
+  chart.setOption(buildOptionForWidth(initialOuterWidth), true);
 
   const resizeObserver = new ResizeObserver(() => {
+    const nextOuter = getOuterWidth();
+    const nextScrollable = Boolean(targetScrollWidth && nextOuter < 520);
+    const nextEffective = nextScrollable && targetScrollWidth ? targetScrollWidth : nextOuter;
+    const nextCompact = nextEffective < 520;
+
+    if (nextScrollable !== lastScrollable) {
+      lastScrollable = nextScrollable;
+      chartDiv.style.width = nextScrollable && targetScrollWidth ? `${targetScrollWidth}px` : '100%';
+      container.classList.toggle('dbtc-chart-scrollable', nextScrollable);
+    }
+
     chart.resize();
+
+    if (nextCompact !== lastCompact || nextScrollable !== useHorizontalScroll) {
+      lastCompact = nextCompact;
+      chart.setOption(buildOptionForWidth(nextOuter), true);
+    }
   });
-  resizeObserver.observe(chartDiv);
+  resizeObserver.observe(container);
 
   return () => {
     if (cellId) {

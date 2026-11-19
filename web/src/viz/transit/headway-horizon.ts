@@ -12,12 +12,14 @@ export interface HeadwayHorizonOptions {
   timeColumn?: string;
   headwayColumn?: string;
   yAxisScale?: 'auto' | 'log' | 'linear';
+  containerWidth?: number;
 }
 
 export function buildHeadwayHorizonOption(
   rows: readonly Record<string, unknown>[],
   options: HeadwayHorizonOptions = {}
 ): EChartsOption {
+  const isCompact = options.containerWidth !== undefined && options.containerWidth < 520;
   const bunchingThreshold = options.bunchingThresholdSec ?? 120;
   const gappingThreshold = options.gappingThresholdSec ?? 600;
   const headwayCol = options.headwayColumn ?? 'headway_sec';
@@ -166,12 +168,14 @@ export function buildHeadwayHorizonOption(
               yAxis: bunchingThreshold,
               lineStyle: { color: '#DC2626', type: 'dashed', width: 2 },
               label: {
-                formatter: `Bunched (< ${Math.round(bunchingThreshold / 60)}m · Nose-to-tail)`,
-                position: 'insideStartBottom',
+                formatter: isCompact
+                  ? `Bunched (< ${Math.round(bunchingThreshold / 60)}m)`
+                  : `Bunched (< ${Math.round(bunchingThreshold / 60)}m · Nose-to-tail)`,
+                position: isCompact ? 'insideStartTop' : 'insideStartBottom',
                 color: '#DC2626',
                 fontWeight: 700,
-                fontSize: 11,
-                padding: [2, 6],
+                fontSize: isCompact ? 10 : 11,
+                padding: isCompact ? [1, 4] : [2, 6],
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
                 borderRadius: 3,
               },
@@ -180,12 +184,14 @@ export function buildHeadwayHorizonOption(
               yAxis: gappingThreshold,
               lineStyle: { color: '#7C3AED', type: 'dotted', width: 2 },
               label: {
-                formatter: `Gapped (> ${Math.round(gappingThreshold / 60)}m · Long wait)`,
+                formatter: isCompact
+                  ? `Gapped (> ${Math.round(gappingThreshold / 60)}m)`
+                  : `Gapped (> ${Math.round(gappingThreshold / 60)}m · Long wait)`,
                 position: 'insideEndTop',
                 color: '#7C3AED',
                 fontWeight: 700,
-                fontSize: 11,
-                padding: [2, 6],
+                fontSize: isCompact ? 10 : 11,
+                padding: isCompact ? [1, 4] : [2, 6],
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
                 borderRadius: 3,
               },
@@ -271,14 +277,15 @@ export function buildHeadwayHorizonOption(
         },
       },
       legend: {
-        top: 6,
+        top: isCompact ? 4 : 6,
+        type: isCompact ? 'scroll' : 'plain',
         data: legendData,
-        itemWidth: 20,
-        itemHeight: 20,
-        itemGap: 14,
+        itemWidth: isCompact ? 16 : 20,
+        itemHeight: isCompact ? 16 : 20,
+        itemGap: isCompact ? 10 : 14,
         textStyle: {
           color: '#1E293B',
-          fontSize: 13,
+          fontSize: isCompact ? 11 : 13,
           fontWeight: 700,
           fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
         },
@@ -289,10 +296,13 @@ export function buildHeadwayHorizonOption(
           return `Line ${name}`;
         },
       },
-      grid: { left: 60, right: 110, top: 48, bottom: 40 },
+      grid: isCompact
+        ? { left: 42, right: 14, top: 64, bottom: 34 }
+        : { left: 60, right: 110, top: 48, bottom: 40 },
       xAxis: {
         type: 'time',
-        name: 'Time (ET)',
+        name: isCompact ? '' : 'Time (ET)',
+        ...(isCompact ? { splitNumber: 4 } : {}),
         nameTextStyle: {
           color: '#64748B',
           fontSize: 11,
@@ -300,8 +310,9 @@ export function buildHeadwayHorizonOption(
         },
         axisLabel: {
           color: '#64748B',
-          fontSize: 11,
+          fontSize: isCompact ? 10 : 11,
           fontFamily: '"JetBrains Mono", monospace',
+          ...(isCompact ? { hideOverlap: true } : {}),
           formatter: (value: number) =>
             new Date(value).toLocaleTimeString('en-US', {
               timeZone: 'America/New_York',
@@ -319,10 +330,17 @@ export function buildHeadwayHorizonOption(
       },
       yAxis: {
         type: useLogScale ? 'log' : 'value',
-        name: useLogScale ? 'Wait Between Trains (log scale)' : 'Wait Between Trains',
+        name: isCompact
+          ? useLogScale
+            ? 'Wait (log)'
+            : 'Wait'
+          : useLogScale
+            ? 'Wait Between Trains (log scale)'
+            : 'Wait Between Trains',
+        ...(isCompact ? { nameGap: 10 } : {}),
         nameTextStyle: {
           color: '#64748B',
-          fontSize: 11,
+          fontSize: isCompact ? 10 : 11,
           fontWeight: 600,
           fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
           padding: [0, 0, 4, 0],
@@ -332,7 +350,7 @@ export function buildHeadwayHorizonOption(
           : 0,
         axisLabel: {
           color: '#64748B',
-          fontSize: 11,
+          fontSize: isCompact ? 10 : 11,
           fontFamily: '"JetBrains Mono", monospace',
           formatter: (sec: number) => {
             if (sec <= 0) return '0';
@@ -411,14 +429,15 @@ export function buildHeadwayHorizonOption(
         },
       },
       legend: {
-        top: 6,
+        top: isCompact ? 4 : 6,
+        type: isCompact ? 'scroll' : 'plain',
         data: legendData,
-        itemWidth: 20,
-        itemHeight: 20,
-        itemGap: 14,
+        itemWidth: isCompact ? 16 : 20,
+        itemHeight: isCompact ? 16 : 20,
+        itemGap: isCompact ? 10 : 14,
         textStyle: {
           color: '#1E293B',
-          fontSize: 13,
+          fontSize: isCompact ? 11 : 13,
           fontWeight: 700,
           fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
         },
@@ -429,14 +448,17 @@ export function buildHeadwayHorizonOption(
           return `Line ${name}`;
         },
       },
-      grid: { left: 60, right: 30, top: 48, bottom: 40 },
+      grid: isCompact
+        ? { left: 40, right: 12, top: 56, bottom: 40 }
+        : { left: 60, right: 30, top: 48, bottom: 40 },
       xAxis: {
         type: 'category',
         data: bins,
-        name: 'Headway Interval',
+        name: isCompact ? '' : 'Headway Interval',
         axisLabel: {
           color: '#64748B',
-          fontSize: 11,
+          fontSize: isCompact ? 10 : 11,
+          ...(isCompact ? { rotate: 20, interval: 0 } : {}),
         },
       },
       yAxis: {

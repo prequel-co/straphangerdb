@@ -26,6 +26,7 @@ export interface MareyChartOptions {
   stationOrder?: readonly string[];
   showBoroughBands?: boolean;
   showBothDirections?: boolean;
+  containerWidth?: number;
 }
 
 interface MareyStopPoint {
@@ -154,6 +155,10 @@ export function buildMareyChartOption(
     ? { stationOrder: stationOrderOrOptions }
     : (stationOrderOrOptions as MareyChartOptions);
   const explicitStationOrder = opts.stationOrder ?? [];
+  const isCompact = opts.containerWidth !== undefined && opts.containerWidth < 520;
+  const compactLabelWidth = isCompact
+    ? Math.max(84, Math.min(115, Math.floor((opts.containerWidth ?? 360) * 0.32)))
+    : undefined;
 
   const tripsMap = new Map<string, TripEntry>();
   const stationBoroughMap = new Map<string, string>();
@@ -696,7 +701,7 @@ export function buildMareyChartOption(
       markPointData.push({
         coord: [originPt[0], originPt[1]],
         symbol: routeMeta.bulletUri,
-        symbolSize: 18,
+        symbolSize: isCompact ? 14 : 18,
       });
     }
 
@@ -808,11 +813,11 @@ export function buildMareyChartOption(
           label: {
             color: '#334155',
             backgroundColor: 'rgba(248, 250, 252, 0.9)',
-            padding: [2, 6],
+            padding: isCompact ? [1, 4] : [2, 6],
             borderRadius: 3,
             position: 'insideRight',
-            distance: 10,
-            fontSize: 10,
+            distance: isCompact ? 4 : 10,
+            fontSize: isCompact ? 9 : 10,
             fontWeight: 700,
             fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
           },
@@ -927,15 +932,16 @@ export function buildMareyChartOption(
     },
     legend: {
       top: 2,
-      right: 16,
+      right: isCompact ? 4 : 16,
+      type: isCompact ? 'scroll' : 'plain',
       data: legendData,
       selected: legendSelected,
-      itemWidth: 20,
-      itemHeight: 20,
-      itemGap: 16,
+      itemWidth: isCompact ? 16 : 20,
+      itemHeight: isCompact ? 16 : 20,
+      itemGap: isCompact ? 10 : 16,
       textStyle: {
         color: '#1E293B',
-        fontSize: 12,
+        fontSize: isCompact ? 11 : 12,
         fontWeight: 700,
         fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
       },
@@ -956,21 +962,23 @@ export function buildMareyChartOption(
       },
     ],
     grid: {
-      left: 16,
-      right: 24,
-      top: 44,
+      left: isCompact ? 6 : 16,
+      right: isCompact ? 10 : 24,
+      top: isCompact ? 36 : 44,
       bottom: 24,
       containLabel: true,
     },
     xAxis: {
       type: 'time',
       name: '',
+      ...(isCompact ? { splitNumber: 4 } : {}),
       axisLine: { lineStyle: { color: '#0F172A', width: 1.75 } },
       axisTick: { show: true, length: 5, lineStyle: { color: '#0F172A', width: 1.25 } },
       axisLabel: {
         color: '#334155',
-        fontSize: 11,
+        fontSize: isCompact ? 10 : 11,
         fontWeight: 600,
+        ...(isCompact ? { hideOverlap: true } : {}),
         formatter: (val: number) => formatNyTime(val, false),
       },
       axisPointer: {
@@ -997,9 +1005,16 @@ export function buildMareyChartOption(
       },
       axisLabel: {
         color: '#1E293B',
-        fontSize: 11,
+        fontSize: isCompact ? 10 : 11,
         fontWeight: 600,
         interval: allStations.length > 28 ? 1 : 0,
+        ...(isCompact && compactLabelWidth
+          ? {
+              width: compactLabelWidth,
+              overflow: 'truncate' as const,
+              ellipsis: '…',
+            }
+          : {}),
       },
       splitLine: {
         show: true,

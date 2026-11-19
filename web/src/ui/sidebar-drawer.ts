@@ -190,16 +190,21 @@ export function renderSidebarDrawer(container: HTMLElement): () => void {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
 
+    const closeBtnHtml = `<button type="button" class="mobile-sidebar-close-btn" aria-label="Close visuals drawer" title="Close"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>`;
+
     const targetBannerHtml = activeCell
       ? activeCell.kind === 'markdown'
         ? `<div class="sidebar-target-banner" style="position: sticky; top: 0; z-index: 2; padding: 8px 10px; background: #FFFBEB; border-bottom: 1px solid #FDE68A; font-size: 11px; color: #92400E;">
-             Target: <strong>#${activeCell.ordinal} — ${escapeSidebarHtml(activeCell.title)}</strong> (Markdown cell — select a query cell to change visual)
+             <span>Target: <strong>#${activeCell.ordinal} - ${escapeSidebarHtml(activeCell.title)}</strong> (Markdown cell - select a query cell to change visual)</span>
+             ${closeBtnHtml}
            </div>`
         : `<div class="sidebar-target-banner" style="position: sticky; top: 0; z-index: 2; padding: 8px 10px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; font-size: 11px; color: #334155;">
-             Target: <strong>#${activeCell.ordinal} — ${escapeSidebarHtml(activeCell.title)}</strong>
+             <span>Target: <strong>#${activeCell.ordinal} - ${escapeSidebarHtml(activeCell.title)}</strong></span>
+             ${closeBtnHtml}
            </div>`
       : `<div class="sidebar-target-banner" style="position: sticky; top: 0; z-index: 2; padding: 8px 10px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; font-size: 11px; color: #64748B;">
-           Select a query cell to configure its visual
+           <span>Select a query cell to configure its visual</span>
+           ${closeBtnHtml}
          </div>`;
 
     const renderTileHtml = (tile: TileInfo) => {
@@ -265,6 +270,14 @@ export function renderSidebarDrawer(container: HTMLElement): () => void {
       </aside>
     `;
 
+    // Mobile drawer close button
+    const closeBtn = container.querySelector('.mobile-sidebar-close-btn');
+    closeBtn?.addEventListener('click', () => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('dbtc:close-mobile-sidebar'));
+      }
+    });
+
     // Attach click listeners to tiles
     container.querySelectorAll('.viz-tile').forEach(tileEl => {
       tileEl.addEventListener('click', async () => {
@@ -288,6 +301,9 @@ export function renderSidebarDrawer(container: HTMLElement): () => void {
           await persistCellToDuckDb(conn, activeCell);
         }
         draw();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('dbtc:close-mobile-sidebar'));
+        }
       });
     });
   };

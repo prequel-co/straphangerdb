@@ -4,6 +4,7 @@ import { KNOWN_NYC_STATION_NAMES } from './station-progression.js';
 export interface MultimodalPulseOptions {
   groupBy?: 'time' | 'station';
   radiusMeters?: number;
+  containerWidth?: number;
 }
 
 function resolveStationName(rawIdOrName: string): string {
@@ -89,6 +90,7 @@ export function buildMultimodalPulseOption(
   rows: readonly Record<string, unknown>[],
   options: MultimodalPulseOptions = {}
 ): EChartsOption {
+  const isCompact = options.containerWidth !== undefined && options.containerWidth < 520;
   if (!rows || rows.length === 0) {
     return {
       title: {
@@ -397,19 +399,20 @@ export function buildMultimodalPulseOption(
       },
       legend: {
         data: legendItems,
-        top: 6,
+        top: isCompact ? 4 : 6,
+        ...(isCompact ? { type: 'scroll' as const } : {}),
         textStyle: {
           fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-          fontSize: 11,
+          fontSize: isCompact ? 10.5 : 11,
           color: '#334155',
         },
-        itemGap: 14,
+        itemGap: isCompact ? 10 : 14,
       },
       grid: {
-        left: 65,
-        right: 65,
-        top: 52,
-        bottom: 40,
+        left: isCompact ? 8 : 65,
+        right: isCompact ? 8 : 65,
+        top: isCompact ? 62 : 52,
+        bottom: isCompact ? 28 : 40,
         containLabel: true,
       },
       xAxis: {
@@ -419,9 +422,10 @@ export function buildMultimodalPulseOption(
         axisTick: { show: false },
         axisLabel: {
           fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-          fontSize: 11,
+          fontSize: isCompact ? 10 : 11,
           color: '#334155',
-          margin: 10,
+          margin: isCompact ? 8 : 10,
+          ...(isCompact ? { hideOverlap: true } : {}),
         },
         splitLine: { show: false },
       },
@@ -429,11 +433,11 @@ export function buildMultimodalPulseOption(
         {
           type: 'value',
           min: 0,
-          name: 'Subway Flow (riders / hr)',
+          name: isCompact ? 'Subway' : 'Subway Flow (riders / hr)',
           position: 'left',
           nameTextStyle: {
             fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-            fontSize: 11,
+            fontSize: isCompact ? 10 : 11,
             color: '#64748B',
             padding: [0, 0, 4, 0],
           },
@@ -441,9 +445,10 @@ export function buildMultimodalPulseOption(
           axisTick: { show: false },
           axisLabel: {
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 11,
+            fontSize: isCompact ? 10 : 11,
             color: '#64748B',
-            formatter: (v: number) => v.toLocaleString(),
+            formatter: (v: number) =>
+              isCompact && Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k` : v.toLocaleString(),
           },
           splitLine: {
             show: true,
@@ -453,11 +458,11 @@ export function buildMultimodalPulseOption(
         {
           type: 'value',
           min: 0,
-          name: 'Citi Bike Capacity',
+          name: isCompact ? 'Bikes' : 'Citi Bike Capacity',
           position: 'right',
           nameTextStyle: {
             fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-            fontSize: 11,
+            fontSize: isCompact ? 10 : 11,
             color: '#0072CE',
             padding: [0, 0, 4, 0],
           },
@@ -468,7 +473,7 @@ export function buildMultimodalPulseOption(
           axisTick: { show: false },
           axisLabel: {
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 11,
+            fontSize: isCompact ? 10 : 11,
             color: '#0072CE',
             formatter: (v: number) => v.toLocaleString(),
           },

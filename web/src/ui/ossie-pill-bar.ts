@@ -5,7 +5,7 @@ import {
   compileOssieConfigToSql,
   DBTC_OSSIE_LENS_META,
   DBTC_OSSIE_THEMES,
-  DBTC_WINDOW_PRESETS,
+  getAllowedWindowPresetsForDataset,
   formatOssieConfigAsQueryCall,
 } from '../data/ossie-loader.js';
 import { getDuckDbConnection } from '../data/duckdb-client.js';
@@ -239,7 +239,14 @@ export function renderOssiePillBar(container: HTMLElement, targetCellId?: string
           </label>
           <label>Time Window:
             <select id="ossie-window-select" class="dbtc-select-sm">
-              ${Object.entries(DBTC_WINDOW_PRESETS).map(([key, info]) => `<option value="${key}" ${key === currentWindow ? 'selected' : ''}>${info.label}</option>`).join('')}
+              ${(() => {
+                const allowedPresets = getAllowedWindowPresetsForDataset(currentFact);
+                const hasCurrent = allowedPresets.some(([k]) => k === currentWindow);
+                const effectiveWindow = hasCurrent ? currentWindow : (allowedPresets[0]?.[0] ?? currentWindow);
+                return allowedPresets
+                  .map(([key, info]) => `<option value="${key}" ${key === effectiveWindow ? 'selected' : ''}>${info.label}</option>`)
+                  .join('');
+              })()}
             </select>
           </label>
           <label>Limit:

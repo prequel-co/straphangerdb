@@ -72,6 +72,7 @@ export interface DbtcLensMeta {
   readonly name: string;
   readonly label: string;
   readonly defaultWindow: string;
+  readonly allowedWindows?: readonly string[];
   readonly defaultAgency: string;
   readonly defaultRoutes: readonly string[];
   readonly defaultLimit?: number;
@@ -109,6 +110,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'subway_station_headways',
     label: 'Subway Headway Regularity',
     defaultWindow: 'yesterday_am_rush',
+    allowedWindows: ['yesterday_am_rush', 'prev_weekday_am_rush', 'yesterday', 'live_3h'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: ['4', '5', '6'],
   },
@@ -116,6 +118,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'train_stringline_marey',
     label: 'Train Stringline (Marey)',
     defaultWindow: 'prev_weekday_am_rush',
+    allowedWindows: ['prev_weekday_am_rush', 'yesterday_am_rush', 'yesterday', 'live_3h'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: ['7', '7X'],
   },
@@ -123,6 +126,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'live_subway_fleet',
     label: 'Live Subway & SIR Fleet',
     defaultWindow: 'live_3h',
+    allowedWindows: ['live_3h', 'yesterday_am_rush', 'yesterday'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: [],
   },
@@ -130,6 +134,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'live_commuter_rail_fleet',
     label: 'Live Commuter Rail (LIRR & MNR)',
     defaultWindow: 'live_3h',
+    allowedWindows: ['live_3h', 'yesterday_am_rush', 'yesterday'],
     defaultAgency: 'MTA_LIRR',
     defaultRoutes: [],
   },
@@ -137,6 +142,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'live_bus_fleet',
     label: 'Live NYC Bus Fleet',
     defaultWindow: 'live_3h',
+    allowedWindows: ['live_3h', 'yesterday_am_rush', 'yesterday'],
     defaultAgency: 'MTA_BUS',
     defaultRoutes: ['M60-SBS'],
   },
@@ -144,6 +150,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'subway_headway_horizon',
     label: 'Subway Headway Horizon',
     defaultWindow: 'prev_weekday_am_rush',
+    allowedWindows: ['prev_weekday_am_rush', 'yesterday_am_rush', 'yesterday', 'live_3h'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: ['R', 'M'],
   },
@@ -151,6 +158,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'multimodal_station_pulse',
     label: 'Multimodal Station Pulse',
     defaultWindow: 'yesterday',
+    allowedWindows: ['yesterday', 'yesterday_am_rush', 'prev_weekday_am_rush', 'latest_turnstiles'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: [],
   },
@@ -158,6 +166,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'od_ridership_flows',
     label: 'Origin-Destination Ridership Flows',
     defaultWindow: 'od_baseline',
+    allowedWindows: ['od_baseline'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: [],
   },
@@ -165,6 +174,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'route_segment_speeds',
     label: 'Route Segment Speeds',
     defaultWindow: 'yesterday',
+    allowedWindows: ['yesterday', 'yesterday_am_rush', 'prev_weekday_am_rush', 'live_3h'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: ['7', 'E', 'F', 'M', 'R', 'N', 'W'],
   },
@@ -172,6 +182,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'station_isochrones',
     label: 'Station Reachability Isochrones',
     defaultWindow: 'yesterday',
+    allowedWindows: ['yesterday', 'yesterday_am_rush', 'prev_weekday_am_rush'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: [],
   },
@@ -179,6 +190,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'schedule_adherence_hourly',
     label: 'Schedule Adherence (Ghost Trains)',
     defaultWindow: 'yesterday',
+    allowedWindows: ['yesterday', 'yesterday_am_rush', 'prev_weekday_am_rush'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: ['L'],
   },
@@ -186,6 +198,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'station_turnstile_ranking',
     label: 'Top Turnstile Stations',
     defaultWindow: 'latest_turnstiles',
+    allowedWindows: ['latest_turnstiles', 'yesterday', 'yesterday_am_rush'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: [],
     defaultLimit: 10,
@@ -194,6 +207,7 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'hourly_turnstile_profile',
     label: 'Hourly Ridership Profile',
     defaultWindow: 'latest_turnstiles',
+    allowedWindows: ['latest_turnstiles', 'yesterday', 'yesterday_am_rush'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: [],
   },
@@ -201,10 +215,32 @@ export const DBTC_OSSIE_LENS_META: readonly DbtcLensMeta[] = [
     name: 'fleet_route_share',
     label: 'Fleet Trip Share by Route',
     defaultWindow: 'yesterday',
+    allowedWindows: ['yesterday', 'yesterday_am_rush', 'prev_weekday_am_rush', 'live_3h'],
     defaultAgency: 'MTA_NYCT_SUBWAY',
     defaultRoutes: [],
   },
 ];
+
+export function getAllowedWindowPresetsForDataset(
+  datasetName: string
+): Array<[string, { label: string; description: string }]> {
+  const lensMeta = DBTC_OSSIE_LENS_META.find(l => l.name === datasetName);
+  let keys: readonly string[];
+  if (lensMeta?.allowedWindows && lensMeta.allowedWindows.length > 0) {
+    keys = lensMeta.allowedWindows;
+  } else if (datasetName.includes('od_ridership')) {
+    keys = ['od_baseline'];
+  } else if (datasetName.includes('turnstile')) {
+    keys = ['latest_turnstiles', 'yesterday', 'yesterday_am_rush'];
+  } else if (datasetName.includes('current_vehicle')) {
+    keys = ['live_3h', 'yesterday_am_rush', 'yesterday'];
+  } else {
+    keys = ['yesterday_am_rush', 'prev_weekday_am_rush', 'yesterday', 'live_3h'];
+  }
+  return keys
+    .filter(k => Boolean(DBTC_WINDOW_PRESETS[k]))
+    .map(k => [k, DBTC_WINDOW_PRESETS[k]!]);
+}
 
 export function resolveWindowPresetSql(preset: string, alias = ''): string | null {
   const p = alias ? `${alias}.` : '';

@@ -6,6 +6,7 @@ import { buildMultimodalPulseOption } from '../src/viz/transit/multimodal-pulse.
 import { buildAdherenceWaterfallOption } from '../src/viz/transit/adherence-waterfall.js';
 import { renderNavbar } from '../src/ui/navbar.js';
 import { renderBottomBar } from '../src/ui/bottom-bar.js';
+import { getAllowedWindowPresetsForDataset } from '../src/data/ossie-loader.js';
 
 describe('Mobile UX Responsive Layouts', () => {
   it('truncates Marey Y-axis station labels and hides overlapping X-axis ticks on compact viewports (< 520px)', () => {
@@ -130,5 +131,19 @@ describe('Mobile UX Responsive Layouts', () => {
     const compactWaterfall = buildAdherenceWaterfallOption(waterfallRows, { containerWidth: 340 });
     expect((compactWaterfall.grid as any).left).toBeLessThanOrEqual(15);
     expect((compactWaterfall.xAxis as any).axisLabel.rotate).toBe(18);
+  });
+
+  it('filters time window presets conditionally based on selected lens or fact dataset', () => {
+    const odWindows = getAllowedWindowPresetsForDataset('od_ridership_flows').map(([k]) => k);
+    expect(odWindows).toEqual(['od_baseline']);
+
+    const headwayWindows = getAllowedWindowPresetsForDataset('subway_station_headways').map(([k]) => k);
+    expect(headwayWindows).not.toContain('od_baseline');
+    expect(headwayWindows).not.toContain('latest_turnstiles');
+    expect(headwayWindows).toContain('yesterday_am_rush');
+
+    const turnstileWindows = getAllowedWindowPresetsForDataset('station_turnstile_ranking').map(([k]) => k);
+    expect(turnstileWindows[0]).toBe('latest_turnstiles');
+    expect(turnstileWindows).not.toContain('od_baseline');
   });
 });

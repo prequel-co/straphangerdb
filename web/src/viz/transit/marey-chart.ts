@@ -1007,7 +1007,8 @@ export function buildMareyChartOption(
         color: '#1E293B',
         fontSize: isCompact ? 10 : 11,
         fontWeight: 600,
-        interval: allStations.length > 28 ? 1 : 0,
+        interval: allStations.length > 24 ? Math.ceil(allStations.length / 22) - 1 : 0,
+        hideOverlap: true,
         ...(isCompact && compactLabelWidth
           ? {
               width: compactLabelWidth,

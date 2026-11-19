@@ -1001,7 +1001,17 @@ export function renderCellVisual(
   chartDiv.className = 'dbtc-chart-container';
   chartDiv.style.width = useHorizontalScroll && targetScrollWidth ? `${targetScrollWidth}px` : '100%';
   chartDiv.style.height = '100%';
-  chartDiv.style.minHeight = '320px';
+  let minChartHeight = 320;
+  if (chartType === 'marey-chart' && rows.length > 0) {
+    const distinctStationCount = new Set(
+      rows.map(r => String(r['station_name'] ?? r['name'] ?? r['parent_station_id'] ?? r['station_id'] ?? ''))
+        .filter(Boolean)
+    ).size;
+    if (distinctStationCount > 22) {
+      minChartHeight = Math.min(720, Math.max(360, distinctStationCount * 16 + 70));
+    }
+  }
+  chartDiv.style.minHeight = `${minChartHeight}px`;
   container.classList.toggle('dbtc-chart-scrollable', useHorizontalScroll);
   container.appendChild(chartDiv);
 

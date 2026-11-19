@@ -27,6 +27,9 @@ export class DbtcMapController {
     }
     this.activeTheme = theme;
 
+    const isMobileViewport = typeof window !== 'undefined' && window.innerWidth <= 768;
+    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+
     this.map = new maplibregl.Map({
       container: this.container,
       style: buildMapStyleForTheme(theme),
@@ -36,6 +39,12 @@ export class DbtcMapController {
       pitch: 0,
       maxPitch: 0,
       preserveDrawingBuffer: true,
+      ...(isMobileViewport
+        ? {
+            pixelRatio: Math.min(dpr, 1.5),
+            cooperativeGestures: true,
+          }
+        : {}),
     });
 
     this.map.addControl(new maplibregl.NavigationControl({ showCompass: true, showZoom: true }), 'top-right');

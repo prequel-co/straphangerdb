@@ -943,13 +943,29 @@ export function renderCellVisual(
       map.once('load', applyLayers);
     }
 
+    let lastMapW = mapDiv.clientWidth;
+    let lastMapH = mapDiv.clientHeight;
+    let mapResizeTimer: ReturnType<typeof setTimeout> | null = null;
     const resizeObserver = new ResizeObserver(() => {
-      map.resize();
+      const w = mapDiv.clientWidth;
+      const h = mapDiv.clientHeight;
+      if (Math.abs(w - lastMapW) < 2 && Math.abs(h - lastMapH) < 2) return;
+      lastMapW = w;
+      lastMapH = h;
+      if (mapResizeTimer !== null) clearTimeout(mapResizeTimer);
+      mapResizeTimer = setTimeout(() => {
+        mapResizeTimer = null;
+        if (!disposed) map.resize();
+      }, 120);
     });
     resizeObserver.observe(mapDiv);
 
     return () => {
       disposed = true;
+      if (mapResizeTimer !== null) {
+        clearTimeout(mapResizeTimer);
+        mapResizeTimer = null;
+      }
       const mAny = map as any;
       if (mAny._livePollIntervalId) {
         clearInterval(mAny._livePollIntervalId);
@@ -1015,7 +1031,10 @@ export function renderCellVisual(
   container.classList.toggle('dbtc-chart-scrollable', useHorizontalScroll);
   container.appendChild(chartDiv);
 
-  const chart = echarts.init(chartDiv, 'mta-modern');
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const chart = echarts.init(chartDiv, 'mta-modern', {
+    devicePixelRatio: initialOuterWidth < 520 ? Math.min(dpr, 1.5) : dpr,
+  });
 
   if (cellId) {
     const existing = CellRuntimeRegistry.get(asCellId(cellId)) ?? {};
@@ -1066,6 +1085,7 @@ export function renderCellVisual(
     }
 
     if (isNarrow) {
+      opt = { ...opt, animation: false };
       if (opt.tooltip && !Array.isArray(opt.tooltip)) {
         opt.tooltip = { ...opt.tooltip, confine: true };
       }
@@ -1077,32 +1097,46 @@ export function renderCellVisual(
     return applyChartColorOverrides(opt, config);
   };
 
+  let lastOuterWidth = initialOuterWidth;
   let lastScrollable = useHorizontalScroll;
   let lastCompact = (useHorizontalScroll && targetScrollWidth ? targetScrollWidth : initialOuterWidth) < 520;
   chart.setOption(buildOptionForWidth(initialOuterWidth), true);
 
+  let chartResizeTimer: ReturnType<typeof setTimeout> | null = null;
   const resizeObserver = new ResizeObserver(() => {
     const nextOuter = getOuterWidth();
-    const nextScrollable = Boolean(targetScrollWidth && nextOuter < 520);
-    const nextEffective = nextScrollable && targetScrollWidth ? targetScrollWidth : nextOuter;
-    const nextCompact = nextEffective < 520;
+    if (Math.abs(nextOuter - lastOuterWidth) < 2) return;
+    lastOuterWidth = nextOuter;
 
-    if (nextScrollable !== lastScrollable) {
-      lastScrollable = nextScrollable;
-      chartDiv.style.width = nextScrollable && targetScrollWidth ? `${targetScrollWidth}px` : '100%';
-      container.classList.toggle('dbtc-chart-scrollable', nextScrollable);
-    }
+    if (chartResizeTimer !== null) clearTimeout(chartResizeTimer);
+    chartResizeTimer = setTimeout(() => {
+      chartResizeTimer = null;
+      const nextScrollable = Boolean(targetScrollWidth && nextOuter < 520);
+      const nextEffective = nextScrollable && targetScrollWidth ? targetScrollWidth : nextOuter;
+      const nextCompact = nextEffective < 520;
+      const layoutModeChanged = nextScrollable !== lastScrollable || nextCompact !== lastCompact;
 
-    chart.resize();
+      if (nextScrollable !== lastScrollable) {
+        lastScrollable = nextScrollable;
+        chartDiv.style.width = nextScrollable && targetScrollWidth ? `${targetScrollWidth}px` : '100%';
+        container.classList.toggle('dbtc-chart-scrollable', nextScrollable);
+      }
 
-    if (nextCompact !== lastCompact || nextScrollable !== useHorizontalScroll) {
-      lastCompact = nextCompact;
-      chart.setOption(buildOptionForWidth(nextOuter), true);
-    }
+      chart.resize();
+
+      if (layoutModeChanged) {
+        lastCompact = nextCompact;
+        chart.setOption(buildOptionForWidth(nextOuter), true);
+      }
+    }, 120);
   });
   resizeObserver.observe(container);
 
   return () => {
+    if (chartResizeTimer !== null) {
+      clearTimeout(chartResizeTimer);
+      chartResizeTimer = null;
+    }
     if (cellId) {
       const cur = CellRuntimeRegistry.get(asCellId(cellId));
       if (cur) delete cur.echartsInstance;

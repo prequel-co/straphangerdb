@@ -1,0 +1,351 @@
+version: "0.2.0.dev0"
+semantic_model:
+  - name: "unified_transit_network"
+    description: "Unified Transit Network multi-fact semantic model linking scheduled vs observed trips, station throughput, and disruptions."
+    ai_context:
+      instructions: "Query schedule_adherence for route-level completion metrics and station_hourly_summary for platform throughput and congestion. Filter by event_date."
+    datasets:
+      - name: "schedule_adherence"
+        description: "Route-level hourly scheduled vs observed trip adherence and service completion"
+        source: "prod.transit_v2.view_schedule_adherence"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "route_id"
+          - "service_hour"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Operating agency"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_id"
+            description: "Route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "service_hour"
+            description: "Hourly service window in America/New_York"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "service_hour"
+            dimension:
+              is_time: true
+          - name: "scheduled_trips"
+            description: "Timetabled trips scheduled in this hour"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "scheduled_trips"
+          - name: "observed_trips"
+            description: "Actual train/bus trips observed running in this hour"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "observed_trips"
+          - name: "service_completion_pct"
+            description: "Percentage of scheduled service delivered (observed / scheduled * 100)"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "service_completion_pct"
+          - name: "avg_observed_headway_sec"
+            description: "Average observed headway in seconds"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "avg_observed_headway_sec"
+          - name: "active_alerts_count"
+            description: "Count of distinct active route alerts in this hour"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "active_alerts_count"
+
+      - name: "station_hourly_summary"
+        description: "Multi-fact hourly summary at parent stations uniting turnstiles, train arrivals, and station alerts"
+        source: "prod.transit_v2.view_station_hourly_summary"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "parent_station_id"
+          - "service_hour"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Operating agency"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "parent_station_id"
+            description: "Normalized parent station ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "parent_station_id"
+          - name: "service_hour"
+            description: "Hourly service window"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "service_hour"
+            dimension:
+              is_time: true
+          - name: "total_entries"
+            description: "Total turnstile passenger entries"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "total_entries"
+          - name: "total_exits"
+            description: "Total turnstile passenger exits"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "total_exits"
+          - name: "train_stops_count"
+            description: "Total observed train stops made at this station"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "train_stops_count"
+          - name: "distinct_vehicles"
+            description: "Distinct transit vehicles servicing this station"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "distinct_vehicles"
+          - name: "avg_headway_sec"
+            description: "Average headway between train arrivals"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "avg_headway_sec"
+          - name: "station_alerts_count"
+            description: "Disruptions affecting this station in this hour"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_alerts_count"
+
+      - name: "dim_stations"
+        description: "SCD-safe dimension view of current transit stations"
+        source: "prod.transit_v2.view_dim_stations"
+        primary_key:
+          - "gtfs_stop_id"
+          - "agency_id"
+        fields:
+          - name: "station_id"
+            description: "Station identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "agency_id"
+            description: "Operating agency"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "name"
+            description: "Station name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "name"
+          - name: "complex_id"
+            description: "Complex identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "complex_id"
+          - name: "gtfs_stop_id"
+            description: "GTFS stop identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "gtfs_stop_id"
+
+      - name: "station_complexes"
+        description: "Aggregated station complexes"
+        source: "prod.transit_v2.view_station_complexes"
+        primary_key:
+          - "complex_id"
+          - "agency_id"
+        fields:
+          - name: "complex_id"
+            description: "Complex identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "complex_id"
+          - name: "agency_id"
+            description: "Operating agency"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "complex_name"
+            description: "Complex name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "complex_name"
+
+      - name: "dim_routes"
+        description: "SCD-safe dimension view of current transit lines and routes"
+        source: "prod.transit_v2.view_dim_routes"
+        primary_key:
+          - "route_id"
+          - "agency_id"
+        fields:
+          - name: "route_id"
+            description: "Route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "agency_id"
+            description: "Operating agency"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_name"
+            description: "Commercial route name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_name"
+
+    relationships:
+      - name: "schedule_adherence_to_dim_routes"
+        from: "schedule_adherence"
+        to: "dim_routes"
+        from_columns:
+          - "route_id"
+          - "agency_id"
+        to_columns:
+          - "route_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "station_summary_to_dim_stations"
+        from: "station_hourly_summary"
+        to: "dim_stations"
+        from_columns:
+          - "parent_station_id"
+          - "agency_id"
+        to_columns:
+          - "gtfs_stop_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "dim_stations_to_complex"
+        from: "dim_stations"
+        to: "station_complexes"
+        from_columns:
+          - "complex_id"
+          - "agency_id"
+        to_columns:
+          - "complex_id"
+          - "agency_id"
+        type: "many_to_one"
+
+    metrics:
+      - name: "overall_system_throughput"
+        description: "Sum of passenger entries and exits at fare-controlled stations"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(NULLIF(station_hourly_summary.total_entries + station_hourly_summary.total_exits, 0))"
+      - name: "station_total_entries"
+        description: "Total passenger entries across stations"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(station_hourly_summary.total_entries)"
+      - name: "station_total_exits"
+        description: "Total passenger exits across stations"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(station_hourly_summary.total_exits)"
+      - name: "station_train_stops_count"
+        description: "Total train stops across stations"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(station_hourly_summary.train_stops_count)"
+      - name: "total_scheduled_trips"
+        description: "Total scheduled trips across filtered period"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(schedule_adherence.scheduled_trips)"
+      - name: "total_observed_trips"
+        description: "Total observed trips delivered"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(schedule_adherence.observed_trips)"
+      - name: "network_service_completion_pct"
+        description: "Overall percentage of scheduled service delivered"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "ROUND(CAST(SUM(schedule_adherence.observed_trips) AS DOUBLE) / NULLIF(SUM(schedule_adherence.scheduled_trips), 0) * 100.0, 2)"

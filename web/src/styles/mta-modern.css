@@ -1,0 +1,171 @@
+/* MTA Modern Editorial Light Design System Tokens and Components */
+
+:root {
+  --mta-header-bg: #FFFFFF;
+  --mta-body-bg: #F4F5F7;
+  --mta-panel-bg: #FFFFFF;
+  --mta-card-bg: #FFFFFF;
+  --mta-surface-subtle: #F8FAFC;
+  --mta-surface-muted: #F1F5F9;
+  --mta-border-color: #E2E8F0;
+  --mta-border-strong: #CBD5E1;
+  --mta-border-hover: #94A3B8;
+  --mta-text-primary: #0F172A;
+  --mta-text-secondary: #475569;
+  --mta-text-muted: #64748B;
+  
+  /* MTA Canonical Trunk Colors */
+  --mta-red: #EE352E;
+  --mta-green: #00933C;
+  --mta-purple: #B933AD;
+  --mta-blue: #0039A6;
+  --mta-orange: #FF6319;
+  --mta-lime: #6CBE45;
+  --mta-brown: #996633;
+  --mta-grey: #A7A9AC;
+  --mta-yellow: #FCCC0A;
+  --mta-shuttle: #808183;
+  --mta-second-ave: #00ADD0;
+  
+  --font-unimark: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-unimark);
+  background-color: var(--mta-body-bg);
+  color: var(--mta-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Route Bullets and Express Diamonds */
+.mta-bullet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+  text-align: center;
+  user-select: none;
+  background-color: var(--mta-blue);
+  color: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
+  flex-shrink: 0;
+}
+
+.mta-bullet.bullet-mta {
+  background-color: var(--mta-blue);
+  color: #FFFFFF;
+}
+
+.mta-diamond-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+}
+
+.mta-diamond {
+  width: 18px;
+  height: 18px;
+  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
+}
+
+.mta-diamond-text {
+  transform: rotate(-45deg);
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Top Navbar */
+.top-navbar {
+  height: 54px;
+  background-color: var(--mta-header-bg);
+  border-top: 3px solid #111315;
+  border-bottom: 1px solid var(--mta-border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--mta-text-primary);
+}
+
+.nav-brand .subtitle {
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--mta-text-secondary);
+  margin-left: 6px;
+}
+
+/* Editorial Publication Card */
+.dbtc-viz-card {
+  background: var(--mta-card-bg);
+  border: 1px solid var(--mta-border-color);
+  border-radius: 6px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.dbtc-viz-card .card-header {
+  border-bottom: 1px solid var(--mta-border-color);
+  padding-bottom: 10px;
+}
+
+.dbtc-viz-card .card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--mta-text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.dbtc-viz-card .card-subtitle {
+  font-size: 13px;
+  color: var(--mta-text-secondary);
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+}
+
+.dbtc-viz-card .card-canvas-container {
+  min-height: 340px;
+  width: 100%;
+  position: relative;
+}
+
+.dbtc-viz-card .card-footer {
+  font-size: 11px;
+  color: var(--mta-text-muted);
+  border-top: 1px solid var(--mta-border-color);
+  padding-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

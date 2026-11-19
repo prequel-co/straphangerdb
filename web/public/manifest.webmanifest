@@ -1,0 +1,25 @@
+{
+  "name": "Data Based Train Control",
+  "short_name": "DBTC",
+  "description": "NYC Transit Journalism and Analytics Studio",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "text/html": [".dbtc.html"]
+      }
+    }
+  ]
+}

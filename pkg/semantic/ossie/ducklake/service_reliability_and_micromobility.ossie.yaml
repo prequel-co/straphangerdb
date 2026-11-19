@@ -1,0 +1,508 @@
+version: "0.2.0.dev0"
+semantic_model:
+  - name: "service_reliability_and_micromobility"
+    description: "Service Reliability and Micromobility semantic model uniting real-time disruptions, route/station alerts, and first/last-mile bike/dock availability."
+    ai_context:
+      instructions: "Query alert_routes and alert_stations to measure service disruptions, and fact_micromobility_status for dock and bike availability. Prune queries using event_date."
+    datasets:
+      - name: "alert_routes"
+        description: "Service alerts normalized per affected transit route"
+        source: "prod.transit_v2.view_alert_routes"
+        primary_key:
+          - "event_date"
+          - "alert_id"
+          - "agency_id"
+          - "route_id"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "alert_id"
+            description: "Alert identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "alert_id"
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_id"
+            description: "Disrupted route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "detected_at"
+            description: "Initial detection timestamp"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "detected_at"
+            dimension:
+              is_time: true
+          - name: "last_seen_at"
+            description: "Latest observation timestamp"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "last_seen_at"
+            dimension:
+              is_time: true
+          - name: "removed_at"
+            description: "Resolution timestamp if cleared"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "removed_at"
+            dimension:
+              is_time: true
+          - name: "cause"
+            description: "Alert cause classification"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "cause"
+          - name: "effect"
+            description: "Alert effect on service"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "effect"
+          - name: "header_text"
+            description: "Summary alert header"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "header_text"
+          - name: "description_text"
+            description: "Detailed alert narrative"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "description_text"
+          - name: "severity"
+            description: "Disruption severity level"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "severity"
+
+      - name: "alert_stations"
+        description: "Service alerts normalized per affected station"
+        source: "prod.transit_v2.view_alert_stations"
+        primary_key:
+          - "event_date"
+          - "alert_id"
+          - "agency_id"
+          - "station_id"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "alert_id"
+            description: "Alert identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "alert_id"
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "station_id"
+            description: "Affected stop / platform identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "parent_station_id"
+            description: "Normalized parent station identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "parent_station_id"
+          - name: "detected_at"
+            description: "Initial detection timestamp"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "detected_at"
+            dimension:
+              is_time: true
+          - name: "cause"
+            description: "Alert cause"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "cause"
+          - name: "effect"
+            description: "Alert effect"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "effect"
+          - name: "severity"
+            description: "Alert severity"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "severity"
+
+      - name: "fact_alerts"
+        description: "Raw service alerts event log"
+        source: "prod.transit_v2.fact_alerts"
+        primary_key:
+          - "event_date"
+          - "alert_id"
+          - "agency_id"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "alert_id"
+            description: "Alert identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "alert_id"
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "detected_at"
+            description: "Detection timestamp"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "detected_at"
+            dimension:
+              is_time: true
+          - name: "cause"
+            description: "Cause"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "cause"
+          - name: "effect"
+            description: "Effect"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "effect"
+
+      - name: "fact_micromobility_status"
+        description: "Periodic micromobility dock and e-bike capacity telemetry"
+        source: "prod.transit_v2.fact_micromobility_status"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "station_id"
+          - "event_time"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "event_time"
+            description: "Observation timestamp"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_time"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Micromobility network (e.g. citibike)"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "station_id"
+            description: "Dock station identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "num_bikes_available"
+            description: "Total available bicycles"
+            datatype: "INTEGER"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "num_bikes_available"
+          - name: "num_ebikes_available"
+            description: "Total available electric bicycles"
+            datatype: "INTEGER"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "num_ebikes_available"
+          - name: "num_docks_available"
+            description: "Total empty docks available for return"
+            datatype: "INTEGER"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "num_docks_available"
+          - name: "is_renting"
+            description: "Whether station is actively renting"
+            datatype: "BOOLEAN"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "is_renting"
+          - name: "is_returning"
+            description: "Whether station is actively accepting returns"
+            datatype: "BOOLEAN"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "is_returning"
+
+      - name: "dim_micromobility_stations"
+        description: "SCD-safe dimension view of micromobility station docks"
+        source: "prod.transit_v2.view_dim_micromobility_stations"
+        primary_key:
+          - "station_id"
+          - "agency_id"
+        fields:
+          - name: "station_id"
+            description: "Station identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "name"
+            description: "Dock location name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "name"
+          - name: "latitude"
+            description: "Latitude"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "latitude"
+          - name: "longitude"
+            description: "Longitude"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "longitude"
+          - name: "capacity"
+            description: "Total physical dock capacity"
+            datatype: "INTEGER"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "capacity"
+
+      - name: "dim_stations"
+        description: "SCD-safe dimension view of transit stations"
+        source: "prod.transit_v2.view_dim_stations"
+        primary_key:
+          - "gtfs_stop_id"
+          - "agency_id"
+        fields:
+          - name: "station_id"
+            description: "Station identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "name"
+            description: "Station name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "name"
+          - name: "gtfs_stop_id"
+            description: "GTFS stop identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "gtfs_stop_id"
+
+      - name: "dim_routes"
+        description: "SCD-safe dimension view of transit routes"
+        source: "prod.transit_v2.view_dim_routes"
+        primary_key:
+          - "route_id"
+          - "agency_id"
+        fields:
+          - name: "route_id"
+            description: "Route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_name"
+            description: "Route name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_name"
+
+    relationships:
+      - name: "alert_routes_to_dim_routes"
+        from: "alert_routes"
+        to: "dim_routes"
+        from_columns:
+          - "route_id"
+          - "agency_id"
+        to_columns:
+          - "route_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "alert_stations_to_dim_stations"
+        from: "alert_stations"
+        to: "dim_stations"
+        from_columns:
+          - "parent_station_id"
+          - "agency_id"
+        to_columns:
+          - "gtfs_stop_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "micro_status_to_dim_stations"
+        from: "fact_micromobility_status"
+        to: "dim_micromobility_stations"
+        from_columns:
+          - "station_id"
+          - "agency_id"
+        to_columns:
+          - "station_id"
+          - "agency_id"
+        type: "many_to_one"
+
+    metrics:
+      - name: "active_disruptions_count"
+        description: "Total unique disruptions"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "COUNT(DISTINCT fact_alerts.alert_id)"
+      - name: "route_alerts_count"
+        description: "Count of route alert incidents"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "COUNT(DISTINCT alert_routes.alert_id)"
+      - name: "station_alerts_count"
+        description: "Count of station alert incidents"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "COUNT(DISTINCT alert_stations.alert_id)"
+      - name: "avg_bikes_available"
+        description: "Average available bikes at active renting docks"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "AVG(fact_micromobility_status.num_bikes_available) FILTER (WHERE fact_micromobility_status.is_renting = true AND (fact_micromobility_status.num_bikes_available + fact_micromobility_status.num_docks_available) > 0)"
+      - name: "avg_ebikes_available"
+        description: "Average available e-bikes at active renting docks"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "AVG(fact_micromobility_status.num_ebikes_available) FILTER (WHERE fact_micromobility_status.is_renting = true AND (fact_micromobility_status.num_bikes_available + fact_micromobility_status.num_docks_available) > 0)"
+      - name: "avg_docks_available"
+        description: "Average empty docks at active renting docks"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "AVG(fact_micromobility_status.num_docks_available) FILTER (WHERE fact_micromobility_status.is_renting = true AND (fact_micromobility_status.num_bikes_available + fact_micromobility_status.num_docks_available) > 0)"

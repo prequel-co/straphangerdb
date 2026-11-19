@@ -1,0 +1,179 @@
+version: "0.2.0.dev0"
+semantic_model:
+  - name: "surface_kinematics"
+    description: "Vendor-agnostic ANSI SQL Surface Kinematics model targeting Apache Iceberg tables."
+    ai_context:
+      instructions: "Query fact_vehicle_positions with event_date filter for surface transit metrics."
+    datasets:
+      - name: "fact_vehicle_positions"
+        description: "Raw real-time vehicle position telemetry"
+        source: "iceberg.transit_v2.fact_vehicle_positions"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "vehicle_id"
+          - "event_time"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "event_time"
+            description: "Timestamp"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_time"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_id"
+            description: "Route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "vehicle_id"
+            description: "Vehicle identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "vehicle_id"
+          - name: "station_id"
+            description: "Station identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "speed"
+            description: "Speed in m/s"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "speed"
+          - name: "bearing"
+            description: "Bearing in degrees"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "bearing"
+
+      - name: "dim_stations"
+        description: "SCD Type II stations dimension"
+        source: "iceberg.transit_v2.dim_stations"
+        primary_key:
+          - "gtfs_stop_id"
+          - "agency_id"
+        fields:
+          - name: "station_id"
+            description: "Station ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "agency_id"
+            description: "Agency ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "name"
+            description: "Station name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "name"
+          - name: "gtfs_stop_id"
+            description: "GTFS stop identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "gtfs_stop_id"
+
+      - name: "dim_routes"
+        description: "SCD Type II routes dimension"
+        source: "iceberg.transit_v2.dim_routes"
+        primary_key:
+          - "route_id"
+          - "agency_id"
+        fields:
+          - name: "route_id"
+            description: "Route ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "agency_id"
+            description: "Agency ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_name"
+            description: "Route name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_name"
+
+    relationships:
+      - name: "positions_to_stations"
+        from: "fact_vehicle_positions"
+        to: "dim_stations"
+        from_columns:
+          - "station_id"
+          - "agency_id"
+        to_columns:
+          - "gtfs_stop_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "positions_to_routes"
+        from: "fact_vehicle_positions"
+        to: "dim_routes"
+        from_columns:
+          - "route_id"
+          - "agency_id"
+        to_columns:
+          - "route_id"
+          - "agency_id"
+        type: "many_to_one"
+
+    metrics:
+      - name: "active_vehicles"
+        description: "Distinct surface transit vehicle count"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "COUNT(DISTINCT fact_vehicle_positions.vehicle_id) FILTER (WHERE fact_vehicle_positions.agency_id IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY'))"
+      - name: "avg_speed_mps"
+        description: "Average speed across surface transit records"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "AVG(fact_vehicle_positions.speed) FILTER (WHERE fact_vehicle_positions.agency_id IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY'))"

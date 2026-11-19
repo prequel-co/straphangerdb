@@ -1,0 +1,11 @@
+.gcloudignore
+.git
+.gitignore
+.dockerignore
+/duckdb-*
+*.duckdb_extension
+*.db
+*.db-wal
+*.db-shm
+web/node_modules/
+web/dist/

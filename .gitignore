@@ -1,0 +1,41 @@
+# Binaries & Executables
+/straphanger
+*.exe
+*.exe?
+*.dll
+*.so
+*.dylib
+*.test
+bin/
+dist/
+tmp/
+/duckdb-*
+*.duckdb_extension
+
+# SQLite & Data Files
+*.db
+*.db-wal
+*.db-shm
+/data/
+
+# Terraform State & Local Configs
+deploy/terraform/.terraform/
+deploy/terraform/*.tfstate
+deploy/terraform/*.tfstate.backup
+deploy/terraform/*.tfvars
+deploy/terraform/terraform.tfvars.json
+
+# Wrangler & Cloudflare Dev Artifacts
+.wrangler/
+*.log
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+# Node & Dependencies
+node_modules/
+
+# Local Helper Scripts
+run_iceberg_query.sh

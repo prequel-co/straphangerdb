@@ -1,0 +1,60 @@
+name: Build GTFS-RT DuckDB Extension
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "extensions/gtfs_rt/**"
+      - ".github/workflows/build-gtfs-rt-ext.yml"
+  pull_request:
+    paths:
+      - "extensions/gtfs_rt/**"
+      - ".github/workflows/build-gtfs-rt-ext.yml"
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-emscripten
+
+      - name: Setup Rust Nightly (for wasm_threads build-std)
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+          targets: wasm32-unknown-emscripten
+
+      - name: Setup Emscripten
+        shell: bash
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install 4.0.6
+          "$RUNNER_TEMP/emsdk/emsdk" activate 4.0.6
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          echo "$PATH" | tr ':' '\n' >> "$GITHUB_PATH"
+          echo "EMSDK=$EMSDK" >> "$GITHUB_ENV"
+
+      - name: Run Rust unit tests
+        working-directory: extensions/gtfs_rt
+        run: cargo test
+
+      - name: Build native extension
+        working-directory: extensions/gtfs_rt
+        run: cargo build --release
+
+      - name: Build DuckDB-Wasm extensions (wasm_eh & wasm_threads)
+        working-directory: extensions/gtfs_rt
+        run: make wasm
+
+      - name: Upload extension artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gtfs_rt-duckdb-wasm-extensions
+          path: web/public/extensions/gtfs_rt/

@@ -1,0 +1,9 @@
+.git
+*.db
+*.db-wal
+*.db-shm
+/duckdb-*
+*.duckdb_extension
+web/node_modules/
+web/dist/
+

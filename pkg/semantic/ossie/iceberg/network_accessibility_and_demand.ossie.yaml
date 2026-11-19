@@ -1,0 +1,198 @@
+version: "0.2.0.dev0"
+semantic_model:
+  - name: "network_accessibility_and_demand"
+    description: "Vendor-agnostic ANSI SQL Network Accessibility and Demand model targeting Apache Iceberg tables."
+    ai_context:
+      instructions: "Query fact_turnstile_counts and fact_ridership partitioned by event_date alongside dim_stations."
+    datasets:
+      - name: "fact_turnstile_counts"
+        description: "Turnstile fare gate entry and exit counts"
+        source: "iceberg.transit_v2.fact_turnstile_counts"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "station_id"
+          - "device_id"
+          - "reading_time"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Agency ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "station_id"
+            description: "Station ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "device_id"
+            description: "Turnstile device ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "device_id"
+          - name: "reading_time"
+            description: "Reading timestamp"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "reading_time"
+            dimension:
+              is_time: true
+          - name: "entry_count"
+            description: "Entry count"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "entry_count"
+          - name: "exit_count"
+            description: "Exit count"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "exit_count"
+
+      - name: "fact_ridership"
+        description: "Passenger origin-destination ridership"
+        source: "iceberg.transit_v2.fact_ridership"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "origin_station_id"
+          - "destination_station_id"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Agency ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "origin_station_id"
+            description: "Origin station ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "origin_station_id"
+          - name: "destination_station_id"
+            description: "Destination station ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "destination_station_id"
+          - name: "passenger_count"
+            description: "Passenger volume"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "passenger_count"
+
+      - name: "dim_stations"
+        description: "SCD Type II stations dimension"
+        source: "iceberg.transit_v2.dim_stations"
+        primary_key:
+          - "station_id"
+          - "agency_id"
+        fields:
+          - name: "station_id"
+            description: "Station ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "agency_id"
+            description: "Agency ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "name"
+            description: "Station name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "name"
+
+    relationships:
+      - name: "turnstiles_to_stations"
+        from: "fact_turnstile_counts"
+        to: "dim_stations"
+        from_columns:
+          - "station_id"
+          - "agency_id"
+        to_columns:
+          - "complex_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "ridership_to_origin_station"
+        from: "fact_ridership"
+        to: "dim_stations"
+        from_columns:
+          - "origin_station_id"
+          - "agency_id"
+        to_columns:
+          - "station_id"
+          - "agency_id"
+        type: "many_to_one"
+
+    metrics:
+      - name: "gross_fare_turnover"
+        description: "Total combined gate entries and exits"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(fact_turnstile_counts.entry_count) + SUM(fact_turnstile_counts.exit_count)"
+      - name: "total_entries"
+        description: "Sum of entries"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(fact_turnstile_counts.entry_count)"
+      - name: "total_exits"
+        description: "Sum of exits"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(fact_turnstile_counts.exit_count)"
+      - name: "total_ridership"
+        description: "Total ridership volume"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(fact_ridership.passenger_count)"

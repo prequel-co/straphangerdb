@@ -1,0 +1,13 @@
+{
+  "vehicles": [
+    {
+      "vehicle_id": "V123",
+      "route_id": "L",
+      "station_id": "L02",
+      "status": "STOPPED_AT",
+      "latitude": 40.7381,
+      "longitude": -73.9814,
+      "event_time": "2026-07-30T14:02:00Z"
+    }
+  ]
+}

@@ -1,0 +1,618 @@
+version: "0.2.0.dev0"
+semantic_model:
+  - name: "rail_operations"
+    description: "Rail Operations semantic model covering station headways, station-to-station legs, and vehicle kinematics for heavy rail and subway systems."
+    ai_context:
+      instructions: "Query station_headways and station_to_station_legs for rail scheduling, travel time, and headway variability analysis. Always filter by event_date to take advantage of partition pruning."
+    datasets:
+      - name: "station_headways"
+        description: "Calculated headway intervals between consecutive trains at stations"
+        source: "prod.transit_v2.view_station_headways"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "route_id"
+          - "trip_id"
+          - "station_id"
+          - "event_time"
+        fields:
+          - name: "event_date"
+            description: "Partition date of the observed train event"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "event_time"
+            description: "Timestamp of train arrival or presence at station"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_time"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Transit agency identifier (e.g. mta_subway, path, njt)"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_id"
+            description: "Transit route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "trip_id"
+            description: "GTFS trip identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "trip_id"
+          - name: "vehicle_id"
+            description: "Physical vehicle identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "vehicle_id"
+          - name: "station_id"
+            description: "Station platform identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "parent_station_id"
+            description: "Normalized parent station identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "parent_station_id"
+          - name: "direction_id"
+            description: "Train direction (N, S, or ALL)"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "direction_id"
+          - name: "status"
+            description: "Vehicle status at station (e.g. STOPPED_AT, INCOMING_AT)"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "status"
+          - name: "headway_sec"
+            description: "Observed headway gap in seconds from preceding train"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "headway_sec"
+          - name: "headway_sec_squared"
+            description: "Squared headway for computing sample variance"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "headway_sec_squared"
+
+      - name: "station_to_station_legs"
+        description: "Point-to-point transit link segments between consecutive stations"
+        source: "prod.transit_v2.view_station_to_station_legs"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "route_id"
+          - "trip_id"
+          - "from_station_id"
+          - "to_station_id"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_id"
+            description: "Route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "route_name"
+            description: "Commercial route name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_name"
+          - name: "trip_id"
+            description: "Trip identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "trip_id"
+          - name: "vehicle_id"
+            description: "Vehicle identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "vehicle_id"
+          - name: "from_station_id"
+            description: "Origin stop identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "from_station_id"
+          - name: "to_station_id"
+            description: "Destination stop identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "to_station_id"
+          - name: "departure_time"
+            description: "Timestamp of departure from origin stop"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "departure_time"
+            dimension:
+              is_time: true
+          - name: "arrival_time"
+            description: "Timestamp of arrival at destination stop"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "arrival_time"
+            dimension:
+              is_time: true
+          - name: "leg_travel_time_sec"
+            description: "Travel duration across leg in seconds"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "leg_travel_time_sec"
+          - name: "leg_distance_meters"
+            description: "Great-circle distance across leg in meters"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "leg_distance_meters"
+          - name: "leg_speed_mps"
+            description: "Calculated leg velocity in meters per second"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "leg_speed_mps"
+
+      - name: "vehicle_kinematics"
+        description: "High-resolution telemetry dynamics, velocity, and dwells"
+        source: "prod.transit_v2.view_vehicle_kinematics"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "vehicle_id"
+          - "event_time"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "event_time"
+            description: "Telemetry observation timestamp"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_time"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_id"
+            description: "Route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "trip_id"
+            description: "Trip identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "trip_id"
+          - name: "station_id"
+            description: "Station identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "vehicle_id"
+            description: "Vehicle identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "vehicle_id"
+          - name: "status"
+            description: "Vehicle status"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "status"
+          - name: "latitude"
+            description: "GPS latitude"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "latitude"
+          - name: "longitude"
+            description: "GPS longitude"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "longitude"
+          - name: "bearing"
+            description: "Compass bearing degrees"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "bearing"
+          - name: "occupancy_status"
+            description: "Passenger load category"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "occupancy_status"
+          - name: "delta_time_sec"
+            description: "Time delta from previous ping"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "delta_time_sec"
+          - name: "step_distance_meters"
+            description: "Distance travelled from previous ping"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "step_distance_meters"
+          - name: "effective_speed_mps"
+            description: "Effective calculated speed in m/s"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "effective_speed_mps"
+          - name: "effective_speed_mph"
+            description: "Effective speed converted to miles per hour"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "effective_speed_mph"
+          - name: "accel_mps2"
+            description: "Instantaneous acceleration in m/s^2"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "accel_mps2"
+          - name: "dwell_sec"
+            description: "Dwell time at station in seconds"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "dwell_sec"
+          - name: "signal_delay_sec"
+            description: "Holding or signal delay duration in seconds"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "signal_delay_sec"
+
+      - name: "dim_stations"
+        description: "SCD-safe dimension view of current transit stations"
+        source: "prod.transit_v2.view_dim_stations"
+        primary_key:
+          - "gtfs_stop_id"
+          - "agency_id"
+        fields:
+          - name: "station_id"
+            description: "Station unique identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "agency_id"
+            description: "Operating transit agency"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "name"
+            description: "Human-readable station name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "name"
+          - name: "latitude"
+            description: "Station latitude"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "latitude"
+          - name: "longitude"
+            description: "Station longitude"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "longitude"
+          - name: "gtfs_stop_id"
+            description: "GTFS stop identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "gtfs_stop_id"
+          - name: "complex_id"
+            description: "Transfer complex identifier grouping physical platforms"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "complex_id"
+          - name: "daytime_routes"
+            description: "Routes serving this station during regular daytime service"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "daytime_routes"
+          - name: "structure"
+            description: "Station structure type (Subway, Elevated, Open Cut, At Grade)"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "structure"
+          - name: "is_accessible"
+            description: "ADA accessibility status"
+            datatype: "BOOLEAN"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "is_accessible"
+          - name: "route_count"
+            description: "Count of distinct routes serving this platform"
+            datatype: "INTEGER"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_count"
+          - name: "is_interlined_junction"
+            description: "Flag indicating whether multiple lines converge at this station"
+            datatype: "BOOLEAN"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "is_interlined_junction"
+
+      - name: "dim_routes"
+        description: "SCD-safe dimension view of current transit lines and routes"
+        source: "prod.transit_v2.view_dim_routes"
+        primary_key:
+          - "route_id"
+          - "agency_id"
+        fields:
+          - name: "route_id"
+            description: "Route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_name"
+            description: "Commercial route name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_name"
+          - name: "color_hex"
+            description: "Hexadecimal route branding color"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "color_hex"
+          - name: "type"
+            description: "GTFS route type"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "type"
+
+    relationships:
+      - name: "headways_to_dim_stations"
+        from: "station_headways"
+        to: "dim_stations"
+        from_columns:
+          - "parent_station_id"
+          - "agency_id"
+        to_columns:
+          - "gtfs_stop_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "headways_to_dim_routes"
+        from: "station_headways"
+        to: "dim_routes"
+        from_columns:
+          - "route_id"
+          - "agency_id"
+        to_columns:
+          - "route_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "legs_to_from_station"
+        from: "station_to_station_legs"
+        to: "dim_stations"
+        from_columns:
+          - "from_station_id"
+          - "agency_id"
+        to_columns:
+          - "gtfs_stop_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "kinematics_to_dim_routes"
+        from: "vehicle_kinematics"
+        to: "dim_routes"
+        from_columns:
+          - "route_id"
+          - "agency_id"
+        to_columns:
+          - "route_id"
+          - "agency_id"
+        type: "many_to_one"
+
+    metrics:
+      - name: "total_train_runs"
+        description: "Total distinct train trips observed"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "COUNT(DISTINCT station_headways.trip_id) FILTER (WHERE station_headways.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY'))"
+      - name: "network_avg_headway_sec"
+        description: "System-wide average rail headway (filtered to 30s..3600s operational range)"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "AVG(station_headways.headway_sec) FILTER (WHERE station_headways.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY') AND station_headways.headway_sec BETWEEN 30 AND 3600)"
+      - name: "avg_headway_sec"
+        description: "Average observed headway in seconds (filtered to 30s..3600s operational range)"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "AVG(station_headways.headway_sec) FILTER (WHERE station_headways.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY') AND station_headways.headway_sec BETWEEN 30 AND 3600)"
+      - name: "median_headway_sec"
+        description: "Median observed headway in seconds (filtered to 30s..3600s operational range)"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "MEDIAN(station_headways.headway_sec) FILTER (WHERE station_headways.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY') AND station_headways.headway_sec BETWEEN 30 AND 3600)"
+      - name: "headway_variance"
+        description: "Headway variance metric (filtered to 30s..3600s operational range)"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "VAR_POP(station_headways.headway_sec) FILTER (WHERE station_headways.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY') AND station_headways.headway_sec BETWEEN 30 AND 3600)"
+      - name: "train_stops_count"
+        description: "Total observed train station stop events"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "COUNT(station_headways.trip_id) FILTER (WHERE station_headways.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY'))"
+      - name: "avg_travel_time_sec"
+        description: "Average leg travel duration in seconds"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "AVG(station_to_station_legs.leg_travel_time_sec) FILTER (WHERE station_to_station_legs.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY'))"
+      - name: "avg_leg_distance_meters"
+        description: "Average great-circle distance between consecutive station stops in meters"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "AVG(station_to_station_legs.leg_distance_meters) FILTER (WHERE station_to_station_legs.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY') AND station_to_station_legs.leg_distance_meters > 0)"
+      - name: "avg_leg_speed_mps"
+        description: "Average transit link speed in m/s"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "AVG(station_to_station_legs.leg_speed_mps) FILTER (WHERE station_to_station_legs.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY') AND station_to_station_legs.leg_speed_mps > 0)"
+      - name: "avg_speed_mph"
+        description: "Average speed in mph (active moving observations)"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "AVG(vehicle_kinematics.effective_speed_mph) FILTER (WHERE vehicle_kinematics.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY') AND vehicle_kinematics.effective_speed_mph > 0)"
+      - name: "total_dwell_sec"
+        description: "Total accumulated dwell time in seconds"
+        datatype: "DOUBLE"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(vehicle_kinematics.dwell_sec) FILTER (WHERE vehicle_kinematics.agency_id NOT IN ('MTA_BUS', 'NJT_BUS', 'NYC_FERRY'))"

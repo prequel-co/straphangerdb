@@ -1,0 +1,20 @@
+[package]
+name = "gtfs_rt"
+version = "0.1.0"
+edition = "2021"
+description = "DuckDB & DuckDB-Wasm C-API extension for querying GTFS-Realtime Protobuf feeds as SQL tables"
+license = "MIT"
+
+[lib]
+name = "gtfs_rt"
+crate-type = ["cdylib"]
+
+[dependencies]
+libc = "0.2"
+prost = "0.13"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+ureq = "2.10"
+
+[build-dependencies]
+cc = "1.1"

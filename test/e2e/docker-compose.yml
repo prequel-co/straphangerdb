@@ -1,0 +1,93 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: straphanger_e2e_postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=lakekeeper
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lakekeeper"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
+  lakekeeper_migrate:
+    image: quay.io/lakekeeper/catalog:latest
+    container_name: straphanger_e2e_lakekeeper_migrate
+    command: ["migrate"]
+    environment:
+      - LAKEKEEPER__PG_DATABASE_URL_WRITE=postgres://postgres:postgres@postgres:5432/lakekeeper
+      - LAKEKEEPER__PG_ENCRYPTION_KEY=straphanger-secret-encryption-key-12345 # gitleaks:allow
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  lakekeeper:
+    image: quay.io/lakekeeper/catalog:latest
+    container_name: straphanger_e2e_lakekeeper
+    command: ["serve"]
+    ports:
+      - "8181:8181"
+    environment:
+      - LAKEKEEPER__PG_DATABASE_URL_WRITE=postgres://postgres:postgres@postgres:5432/lakekeeper
+      - LAKEKEEPER__PG_ENCRYPTION_KEY=straphanger-secret-encryption-key-12345 # gitleaks:allow
+      - LAKEKEEPER__PORT=8181
+    depends_on:
+      postgres:
+        condition: service_healthy
+      lakekeeper_migrate:
+        condition: service_completed_successfully
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: straphanger_e2e_rustfs
+    ports:
+      - "9000:9000"
+    environment:
+      - RUSTFS_ROOT_USER=admin
+      - RUSTFS_ROOT_PASSWORD=password123
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
+  straphanger_iceberg:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    container_name: straphanger_e2e_iceberg
+    depends_on:
+      rustfs:
+        condition: service_healthy
+      lakekeeper:
+        condition: service_started
+    environment:
+      - CLOUDFLARE_ACCOUNT_ID=e2e_account
+      - R2_BUCKET_NAME=e2e-bucket
+      - R2_ACCESS_KEY_ID=admin
+      - R2_SECRET_ACCESS_KEY=password123
+      - OTF_FORMAT=iceberg
+      - BUCKET_PREFIX=iceberg_catalog/
+      - S3_ENDPOINT=http://rustfs:9000
+      - ICEBERG_CATALOG_URI=http://lakekeeper:8181/catalog
+      - FLUSH_INTERVAL=5s
+
+  straphanger_ducklake:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    container_name: straphanger_e2e_ducklake
+    depends_on:
+      rustfs:
+        condition: service_healthy
+    environment:
+      - CLOUDFLARE_ACCOUNT_ID=e2e_account
+      - R2_BUCKET_NAME=e2e-bucket
+      - R2_ACCESS_KEY_ID=admin
+      - R2_SECRET_ACCESS_KEY=password123
+      - OTF_FORMAT=ducklake
+      - BUCKET_PREFIX=ducklake_catalog/
+      - S3_ENDPOINT=http://rustfs:9000
+      - FLUSH_INTERVAL=5s

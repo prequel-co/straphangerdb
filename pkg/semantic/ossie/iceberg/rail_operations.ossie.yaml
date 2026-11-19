@@ -1,0 +1,263 @@
+version: "0.2.0.dev0"
+semantic_model:
+  - name: "rail_operations"
+    description: "Vendor-agnostic ANSI SQL Rail Operations semantic model targeting Apache Iceberg base tables."
+    ai_context:
+      instructions: "Query fact_vehicle_positions partitioned by event_date alongside dim_stations and dim_routes."
+    datasets:
+      - name: "fact_vehicle_positions"
+        description: "Raw real-time vehicle position telemetry"
+        source: "iceberg.transit_v2.fact_vehicle_positions"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "vehicle_id"
+          - "event_time"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "event_time"
+            description: "Telemetry event timestamp"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_time"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_id"
+            description: "Route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "trip_id"
+            description: "Trip identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "trip_id"
+          - name: "station_id"
+            description: "Station identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "vehicle_id"
+            description: "Vehicle identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "vehicle_id"
+          - name: "status"
+            description: "Vehicle transit status"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "status"
+          - name: "latitude"
+            description: "Latitude"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "latitude"
+          - name: "longitude"
+            description: "Longitude"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "longitude"
+          - name: "bearing"
+            description: "Bearing in degrees"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "bearing"
+          - name: "speed"
+            description: "Speed in m/s"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "speed"
+          - name: "occupancy_status"
+            description: "Passenger occupancy classification"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "occupancy_status"
+
+      - name: "dim_stations"
+        description: "SCD Type II transit stations dimension"
+        source: "iceberg.transit_v2.dim_stations"
+        primary_key:
+          - "gtfs_stop_id"
+          - "agency_id"
+        fields:
+          - name: "station_id"
+            description: "Station identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "name"
+            description: "Station name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "name"
+          - name: "latitude"
+            description: "Latitude"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "latitude"
+          - name: "longitude"
+            description: "Longitude"
+            datatype: "DOUBLE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "longitude"
+          - name: "complex_id"
+            description: "Complex identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "complex_id"
+          - name: "gtfs_stop_id"
+            description: "GTFS stop identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "gtfs_stop_id"
+          - name: "is_accessible"
+            description: "ADA accessibility flag"
+            datatype: "BOOLEAN"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "is_accessible"
+          - name: "is_current"
+            description: "Current active record flag"
+            datatype: "BOOLEAN"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "is_current"
+
+      - name: "dim_routes"
+        description: "SCD Type II transit routes dimension"
+        source: "iceberg.transit_v2.dim_routes"
+        primary_key:
+          - "route_id"
+          - "agency_id"
+        fields:
+          - name: "route_id"
+            description: "Route identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "agency_id"
+            description: "Agency identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_name"
+            description: "Route name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_name"
+          - name: "color_hex"
+            description: "Hex color code"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "color_hex"
+          - name: "is_current"
+            description: "Current active record flag"
+            datatype: "BOOLEAN"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "is_current"
+
+    relationships:
+      - name: "positions_to_stations"
+        from: "fact_vehicle_positions"
+        to: "dim_stations"
+        from_columns:
+          - "station_id"
+          - "agency_id"
+        to_columns:
+          - "gtfs_stop_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "positions_to_routes"
+        from: "fact_vehicle_positions"
+        to: "dim_routes"
+        from_columns:
+          - "route_id"
+          - "agency_id"
+        to_columns:
+          - "route_id"
+          - "agency_id"
+        type: "many_to_one"
+
+    metrics:
+      - name: "distinct_trains_reporting"
+        description: "Distinct vehicle identifiers reporting telemetry"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "COUNT(DISTINCT fact_vehicle_positions.vehicle_id)"
+      - name: "position_updates_count"
+        description: "Total recorded vehicle position pings"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "COUNT(fact_vehicle_positions.vehicle_id)"

@@ -1,0 +1,14 @@
+[
+  {
+    "station_id": "L01",
+    "agency_id": "MTA_NYCT_SUBWAY",
+    "name": "8th Ave - 14th St",
+    "latitude": 40.7397,
+    "longitude": -74.0025,
+    "gtfs_stop_id": "L01",
+    "complex_id": "601",
+    "daytime_routes": "A C E L",
+    "structure": "Subway",
+    "is_accessible": false
+  }
+]

@@ -1,0 +1,59 @@
+{
+  "version": "0.2.0.dev0",
+  "themes": [
+    {
+      "id": "dbtc",
+      "name": "DBTC (NYC Transit Studio)",
+      "description": "Unified semantic model combining rail operations, surface kinematics, schedule adherence, station demand, OD ridership, micromobility, and service lines for all default studio cells",
+      "models": {
+        "ducklake": "ducklake/dbtc.ossie.yaml",
+        "iceberg": "iceberg/dbtc.ossie.yaml"
+      }
+    },
+    {
+      "id": "rail_operations",
+      "name": "Rail Operations",
+      "description": "Station headways, station-to-station legs, and heavy rail vehicle kinematics",
+      "models": {
+        "ducklake": "ducklake/rail_operations.ossie.yaml",
+        "iceberg": "iceberg/rail_operations.ossie.yaml"
+      }
+    },
+    {
+      "id": "surface_kinematics",
+      "name": "Surface Kinematics",
+      "description": "Surface transit kinematics, acceleration, dwells, and headway adherence",
+      "models": {
+        "ducklake": "ducklake/surface_kinematics.ossie.yaml",
+        "iceberg": "iceberg/surface_kinematics.ossie.yaml"
+      }
+    },
+    {
+      "id": "network_accessibility_and_demand",
+      "name": "Network Accessibility and Demand",
+      "description": "Turnstile flows, payment classifications, station complex transfers, and passenger ridership",
+      "models": {
+        "ducklake": "ducklake/network_accessibility_and_demand.ossie.yaml",
+        "iceberg": "iceberg/network_accessibility_and_demand.ossie.yaml"
+      }
+    },
+    {
+      "id": "service_reliability_and_micromobility",
+      "name": "Service Reliability and Micromobility",
+      "description": "Real-time service alerts by route and station, alongside micromobility dock and e-bike availability",
+      "models": {
+        "ducklake": "ducklake/service_reliability_and_micromobility.ossie.yaml",
+        "iceberg": "iceberg/service_reliability_and_micromobility.ossie.yaml"
+      }
+    },
+    {
+      "id": "unified_transit_network",
+      "name": "Unified Transit Network",
+      "description": "Multi-fact schedule adherence and station hourly performance bridges uniting operations, demand, and disruptions",
+      "models": {
+        "ducklake": "ducklake/unified_transit_network.ossie.yaml",
+        "iceberg": "iceberg/unified_transit_network.ossie.yaml"
+      }
+    }
+  ]
+}

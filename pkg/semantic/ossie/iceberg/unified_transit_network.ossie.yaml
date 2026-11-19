@@ -1,0 +1,313 @@
+version: "0.2.0.dev0"
+semantic_model:
+  - name: "unified_transit_network"
+    description: "Vendor-agnostic ANSI SQL Unified Transit Network model uniting schedules, telemetry, turnstiles, and alerts on Iceberg tables."
+    ai_context:
+      instructions: "Query base fact tables partitioned by event_date with dim_stations for multi-domain analysis."
+    datasets:
+      - name: "fact_schedules"
+        description: "Scheduled timetable arrivals and departures"
+        source: "iceberg.transit_v2.fact_schedules"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "route_id"
+          - "trip_id"
+          - "station_id"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Agency ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_id"
+            description: "Route ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "trip_id"
+            description: "Trip ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "trip_id"
+          - name: "station_id"
+            description: "Station ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "scheduled_arrival_time"
+            description: "Scheduled arrival"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "scheduled_arrival_time"
+            dimension:
+              is_time: true
+          - name: "scheduled_departure_time"
+            description: "Scheduled departure"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "scheduled_departure_time"
+            dimension:
+              is_time: true
+
+      - name: "fact_vehicle_positions"
+        description: "Real-time vehicle position telemetry"
+        source: "iceberg.transit_v2.fact_vehicle_positions"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "vehicle_id"
+          - "event_time"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Agency ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "route_id"
+            description: "Route ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "route_id"
+          - name: "trip_id"
+            description: "Trip ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "trip_id"
+          - name: "station_id"
+            description: "Station ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "vehicle_id"
+            description: "Vehicle ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "vehicle_id"
+          - name: "event_time"
+            description: "Event timestamp"
+            datatype: "TIMESTAMP"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_time"
+            dimension:
+              is_time: true
+
+      - name: "fact_turnstile_counts"
+        description: "Fare gate counts"
+        source: "iceberg.transit_v2.fact_turnstile_counts"
+        primary_key:
+          - "event_date"
+          - "agency_id"
+          - "station_id"
+          - "device_id"
+          - "reading_time"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "agency_id"
+            description: "Agency ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "station_id"
+            description: "Station ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "entry_count"
+            description: "Entries"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "entry_count"
+          - name: "exit_count"
+            description: "Exits"
+            datatype: "BIGINT"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "exit_count"
+
+      - name: "fact_alerts"
+        description: "Active alerts"
+        source: "iceberg.transit_v2.fact_alerts"
+        primary_key:
+          - "event_date"
+          - "alert_id"
+          - "agency_id"
+        fields:
+          - name: "event_date"
+            description: "Partition date"
+            datatype: "DATE"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "event_date"
+            dimension:
+              is_time: true
+          - name: "alert_id"
+            description: "Alert ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "alert_id"
+          - name: "agency_id"
+            description: "Agency ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+
+      - name: "dim_stations"
+        description: "SCD Type II transit stations"
+        source: "iceberg.transit_v2.dim_stations"
+        primary_key:
+          - "gtfs_stop_id"
+          - "agency_id"
+        fields:
+          - name: "station_id"
+            description: "Station ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "station_id"
+          - name: "agency_id"
+            description: "Agency ID"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "agency_id"
+          - name: "name"
+            description: "Station name"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "name"
+          - name: "gtfs_stop_id"
+            description: "GTFS stop identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "gtfs_stop_id"
+          - name: "complex_id"
+            description: "Complex identifier"
+            datatype: "VARCHAR"
+            expression:
+              dialects:
+                - dialect: "ANSI_SQL"
+                  expression: "complex_id"
+
+    relationships:
+      - name: "schedules_to_stations"
+        from: "fact_schedules"
+        to: "dim_stations"
+        from_columns:
+          - "station_id"
+          - "agency_id"
+        to_columns:
+          - "gtfs_stop_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "positions_to_stations"
+        from: "fact_vehicle_positions"
+        to: "dim_stations"
+        from_columns:
+          - "station_id"
+          - "agency_id"
+        to_columns:
+          - "gtfs_stop_id"
+          - "agency_id"
+        type: "many_to_one"
+      - name: "turnstiles_to_stations"
+        from: "fact_turnstile_counts"
+        to: "dim_stations"
+        from_columns:
+          - "station_id"
+          - "agency_id"
+        to_columns:
+          - "complex_id"
+          - "agency_id"
+        type: "many_to_one"
+
+    metrics:
+      - name: "total_turnstile_entries"
+        description: "Sum of entries"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "SUM(fact_turnstile_counts.entry_count)"
+      - name: "total_scheduled_events"
+        description: "Count of scheduled stops"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "COUNT(fact_schedules.trip_id)"
+      - name: "telemetry_events"
+        description: "Total telemetry events"
+        datatype: "BIGINT"
+        expression:
+          dialects:
+            - dialect: "ANSI_SQL"
+              expression: "COUNT(fact_vehicle_positions.vehicle_id)"

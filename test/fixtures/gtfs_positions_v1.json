@@ -1,0 +1,13 @@
+{
+  "vehicles": [
+    {
+      "vehicle_id": "V123",
+      "route_id": "L",
+      "station_id": "L01",
+      "status": "IN_TRANSIT_TO",
+      "latitude": 40.7359,
+      "longitude": -73.9905,
+      "event_time": "2026-07-30T14:00:00Z"
+    }
+  ]
+}
